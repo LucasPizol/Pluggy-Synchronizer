@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jboss.logging.Logger;
-
 import com.domain.gateway.open_finance.IOpenFinance;
 import com.domain.gateway.open_finance.models.Transaction;
 import com.domain.shared.PaginatedResponse;
@@ -27,8 +25,6 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   @Inject
   private TransactionRepository transactionRepository;
 
-  private final Logger LOG = Logger.getLogger(TransactionsSynchronizerUseCase.class);
-
   @Override
   public void synchronizeTransactions(String accountId) {
     synchronizeTransactions(accountId, null, null);
@@ -43,8 +39,6 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   @Transactional
   public void synchronizeTransactions(String accountId, LocalDate startDate, String[] transactionIds) {
     PaginatedResponse<Transaction> response = openFinance.listTransactions(accountId, startDate, transactionIds);
-
-    LOG.infof("Total transactions found: %d", response.getTotal());
 
     Transaction[] transactions = response.getItems();
 
