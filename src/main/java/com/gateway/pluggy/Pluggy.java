@@ -1,4 +1,4 @@
-package com.gateway;
+package com.gateway.pluggy;
 
 import java.net.URI;
 import java.net.http.HttpClient;

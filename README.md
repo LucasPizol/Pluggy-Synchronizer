@@ -1,286 +1,234 @@
-# 🔐 Quarkus Authentication Quick Start
+# Open Finance Transaction Sync
 
-Sistema de autenticação completo com JWT para Quarkus.
+API REST para sincronização de transações bancárias via Open Finance (Pluggy).
 
-> **📖 Documentação Rápida:**
-> - **[QUICKSTART.md](QUICKSTART.md)** - Comece em 5 minutos
-> - **[EXAMPLES.md](EXAMPLES.md)** - Exemplos em várias linguagens
-> - **[VALIDATION.md](VALIDATION.md)** - Validação automática de dados
-> - **[SECURITY.md](SECURITY.md)** - Considerações de segurança
+## Funcionalidades
 
-## 🚀 Funcionalidades
+- Sincronização de transações bancárias via API Pluggy
+- Persistência de transações em PostgreSQL
+- Autenticação automática com cache em Redis
+- Arquitetura em camadas (Domain, Application, Infrastructure, Gateway)
 
-- ✅ Registro de usuários
-- ✅ Login com JWT
-- ✅ Senhas criptografadas com BCrypt
-- ✅ Proteção de rotas com `@RolesAllowed`
-- ✅ Roles de usuário (USER, ADMIN)
-- ✅ **Validação automática de dados com Bean Validation**
+## Arquitetura
 
-## 📋 Pré-requisitos
-
-- Java 17+
-- Maven 3.8+
-
-## 🔧 Instalação
-
-1. Instale as dependências:
-
-```bash
-mvn clean install
+```
+src/main/java/com/
+├── domain/                          # Regras de negócio e interfaces
+│   ├── gateway/
+│   │   └── open_finance/
+│   │       ├── IOpenFinance.java    # Interface do gateway
+│   │       └── models/
+│   │           ├── Transaction.java
+│   │           └── TransactionPageResponse.java
+│   └── services/
+│       ├── open_finance/
+│       │   └── ITransactionSynchronizer.java
+│       └── transactions/
+│           └── ITransactionList.java
+├── application/                     # Casos de uso
+│   └── services/
+│       ├── open_finance/
+│       │   └── TransactionsSynchronizer.java
+│       └── transactions/
+│           └── TransactionsList.java
+├── infrastructure/                  # Persistência
+│   └── persistence/
+│       ├── entities/
+│       │   └── TransactionEntity.java
+│       └── repositories/
+│           └── TransactionRepository.java
+├── gateway/                         # Integrações externas
+│   ├── Pluggy.java                  # Implementação Open Finance
+│   └── pluggy/auth/
+│       ├── AuthenticationService.java
+│       ├── PluggyAuthContext.java
+│       ├── PluggyAuthInterceptor.java
+│       └── RequiresPluggyAuth.java
+└── resources/                       # Endpoints REST
+    └── TransactionsSynchronizer.java
 ```
 
-2. Execute a aplicação:
+## Pré-requisitos
+
+- Java 21+
+- Maven 3.8+
+- Docker (para PostgreSQL e Redis)
+
+## Instalação
+
+### 1. Clone e configure
 
 ```bash
-mvn quarkus:dev
+cp .env.example .env
+# Edite o .env com suas credenciais da Pluggy
+```
+
+### 2. Inicie os serviços
+
+```bash
+# PostgreSQL
+docker run -d \
+  --name postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=transactions_db \
+  -p 5432:5432 \
+  postgres:16
+
+# Redis
+docker run -d \
+  --name redis \
+  -p 6379:6379 \
+  redis:7
+```
+
+### 3. Execute a aplicação
+
+```bash
+./mvnw quarkus:dev
 ```
 
 A aplicação estará disponível em `http://localhost:8080`
 
-## 🔐 Endpoints da API
+## Configuração
 
-### Autenticação
-
-#### Registrar Novo Usuário
+### Variáveis de Ambiente (.env)
 
 ```bash
-POST /api/auth/register
+# Pluggy API (Open Finance)
+PLUGGY_API_URL=https://api.pluggy.ai
+PLUGGY_CLIENT_ID=seu_client_id
+PLUGGY_CLIENT_SECRET=seu_client_secret
+PLUGGY_AUTH_CACHE_TTL=3600
+
+# PostgreSQL
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=transactions_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+
+# Redis (cache de tokens)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# Hibernate
+HIBERNATE_DDL=update
+HIBERNATE_LOG_SQL=false
+```
+
+## Endpoints
+
+### Sincronizar Transações
+
+Sincroniza transações de uma conta bancária da Pluggy para o banco local.
+
+```bash
+POST /transactions/sync
 Content-Type: application/json
 
 {
-  "username": "joao",
-  "email": "joao@example.com",
-  "password": "senha123"
+  "accountId": "562b795d-1653-429f-be86-74ead9502813"
 }
 ```
 
-**Resposta de Sucesso (201):**
+**Resposta (200):**
 ```json
 {
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "username": "joao",
-  "email": "joao@example.com"
+  "message": "Transactions synchronized successfully"
 }
 ```
 
-#### Login
+### Listar Transações
+
+Lista transações armazenadas no banco local.
 
 ```bash
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "username": "joao",
-  "password": "senha123"
-}
+GET /transactions?accountId=562b795d-1653-429f-be86-74ead9502813
 ```
 
-**Resposta de Sucesso (200):**
+**Resposta (200):**
 ```json
 {
-  "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "username": "joao",
-  "email": "joao@example.com"
+  "total": 10,
+  "page": 1,
+  "data": [
+    {
+      "id": "a8534c85-53ce-4f21-94d7-50e9d2ee4957",
+      "accountId": "562b795d-1653-429f-be86-74ead9502813",
+      "description": "PAGO NETFLIX SERV",
+      "amount": -58.00,
+      "date": "2020-10-15T00:00:00",
+      "status": "POSTED",
+      "type": "DEBIT",
+      "categoryId": 1
+    }
+  ]
 }
 ```
 
-### Rotas Protegidas
+## Fluxo de Autenticação Pluggy
 
-#### Informações do Usuário (Requer Autenticação)
+A autenticação com a API Pluggy é gerenciada automaticamente:
 
-```bash
-GET /api/protected/user
-Authorization: Bearer SEU_TOKEN_JWT
-```
+1. **Interceptor** (`@RequiresPluggyAuth`) intercepta chamadas que precisam de autenticação
+2. **AuthenticationService** obtém o token (do cache Redis ou nova autenticação)
+3. **PluggyAuthContext** armazena o token durante a requisição
+4. Token é cacheado no Redis pelo TTL configurado (padrão: 1 hora)
 
-**Resposta:**
-```json
-{
-  "username": "joao",
-  "email": "joao@example.com",
-  "userId": 1,
-  "roles": ["USER"],
-  "message": "Hello joao, you have access to this protected route!"
-}
-```
+## Tecnologias
 
-#### Rota Admin (Requer Role ADMIN)
+- **Quarkus 3.31** - Framework Java supersônico
+- **Hibernate ORM + Panache** - Persistência simplificada
+- **PostgreSQL** - Banco de dados
+- **Redis** - Cache de tokens de autenticação
+- **Jackson** - Serialização JSON
+- **SmallRye JWT** - Autenticação JWT
 
-```bash
-GET /api/protected/admin
-Authorization: Bearer SEU_TOKEN_JWT_ADMIN
-```
+## Desenvolvimento
 
-#### Rota Pública (Sem Autenticação)
+### Modo Dev (hot reload)
 
 ```bash
-GET /api/protected/public
+./mvnw quarkus:dev
 ```
 
-## 🧪 Testando com cURL
-
-### 1. Registrar um usuário
+### Compilar
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "joao",
-    "email": "joao@example.com",
-    "password": "senha123"
-  }'
+./mvnw clean package
 ```
 
-### 2. Fazer login
+### Executar JAR
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "joao",
-    "password": "senha123"
-  }'
+java -jar target/quarkus-app/quarkus-run.jar
 ```
 
-**Copie o token da resposta!**
+## Troubleshooting
 
-### 3. Acessar rota protegida
+### Erro: "database does not exist"
 
+Crie o banco de dados:
 ```bash
-curl -X GET http://localhost:8080/api/protected/user \
-  -H "Authorization: Bearer SEU_TOKEN_AQUI"
+docker exec -it postgres psql -U postgres -c "CREATE DATABASE transactions_db;"
 ```
 
-## 🔒 Como Proteger Suas Rotas
+### Erro: "release version 17 not supported"
 
-Para proteger um endpoint, basta adicionar a anotação `@RolesAllowed`:
-
-```java
-@GET
-@Path("/minha-rota")
-@RolesAllowed({"USER"})
-public Response minhaRota() {
-    // Código protegido
-}
+Instale o JDK 21 completo:
+```bash
+sudo apt install openjdk-21-jdk
 ```
 
-### Níveis de Proteção
+### Erro: "Authentication failed: 500"
 
-- **Sem anotação**: Público (qualquer um pode acessar)
-- **`@RolesAllowed("USER")`**: Apenas usuários autenticados
-- **`@RolesAllowed("ADMIN")`**: Apenas administradores
-- **`@RolesAllowed({"USER", "ADMIN"})`**: Usuários ou admins
+Verifique se as credenciais da Pluggy no `.env` estão corretas e sem aspas.
 
-## 📝 Acessando Informações do Token
+### Erro: "Unsatisfied dependency"
 
-Você pode injetar o JWT em qualquer recurso:
+Adicione `@ApplicationScoped` na classe que implementa a interface.
 
-```java
-@Inject
-JsonWebToken jwt;
-
-public String getUsername() {
-    return jwt.getName(); // Retorna o username
-}
-
-public Object getClaim() {
-    return jwt.getClaim("email"); // Acessa claims customizados
-}
-
-public Set<String> getRoles() {
-    return jwt.getGroups(); // Retorna as roles
-}
-```
-
-## ⚙️ Configuração
-
-Veja o arquivo `src/main/resources/application.properties`:
-
-```properties
-# Duração do token em segundos (padrão: 24 horas)
-jwt.duration=86400
-
-# Porta da aplicação
-quarkus.http.port=8080
-```
-
-## 🗂️ Estrutura do Projeto
-
-```
-src/main/java/com/
-├── application/
-│   ├── dto/              # Data Transfer Objects
-│   │   ├── LoginRequest.java
-│   │   ├── RegisterRequest.java
-│   │   ├── AuthResponse.java
-│   │   └── UserDTO.java
-│   └── service/          # Lógica de negócio
-│       └── AuthService.java
-├── domain/
-│   └── models/           # Entidades
-│       └── User.java
-├── infrastructure/
-│   └── repository/       # Persistência
-│       └── UserRepository.java
-└── resources/            # Controllers REST
-    ├── SessionResource.java
-    └── ProtectedResource.java
-```
-
-## 🔑 Segurança
-
-- ✅ Senhas são criptografadas com BCrypt (salt automático)
-- ✅ Tokens JWT assinados com RSA-256
-- ✅ Validação de dados de entrada
-- ✅ Proteção contra duplicação de username/email
-
-## 📦 Para Produção
-
-**Importante:** Este é um quickstart com armazenamento em memória. Para produção:
-
-1. **Adicione um banco de dados:**
-   - Hibernate com Panache
-   - PostgreSQL, MySQL, etc.
-
-2. **Adicione validações:**
-   ```xml
-   <dependency>
-     <groupId>io.quarkus</groupId>
-     <artifactId>quarkus-hibernate-validator</artifactId>
-   </dependency>
-   ```
-
-3. **Configure CORS adequadamente** em `application.properties`
-
-4. **Use variáveis de ambiente** para informações sensíveis
-
-5. **Implemente refresh tokens** para melhor segurança
-
-## 🐛 Troubleshooting
-
-### Erro: "Invalid token"
-- Verifique se está enviando o header `Authorization: Bearer TOKEN`
-- Confirme que o token não expirou (duração configurada em `jwt.duration`)
-
-### Erro: "Forbidden"
-- Verifique se seu usuário tem a role necessária para acessar a rota
-
-## 📚 Próximos Passos
-
-- [ ] Adicionar refresh tokens
-- [ ] Implementar "esqueci minha senha"
-- [ ] Adicionar verificação de email
-- [ ] Implementar rate limiting
-- [ ] Adicionar logs de auditoria
-- [ ] Integrar com banco de dados
-
-## 📖 Documentação Oficial
-
-- [Quarkus Security](https://quarkus.io/guides/security)
-- [SmallRye JWT](https://quarkus.io/guides/security-jwt)
-- [Quarkus REST](https://quarkus.io/guides/rest-json)
-
-## 📄 Licença
+## Licença
 
 MIT
