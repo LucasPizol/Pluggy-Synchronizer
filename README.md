@@ -1,51 +1,74 @@
 # Open Finance Transaction Sync
 
-API REST para sincronização de transações bancárias via Open Finance (Pluggy).
+API REST para sincronização de transações bancárias via Open Finance utilizando a API Pluggy.
 
 ## Funcionalidades
 
-- Sincronização de transações bancárias via API Pluggy
-- Persistência de transações em PostgreSQL
-- Autenticação automática com cache em Redis
-- Arquitetura em camadas (Domain, Application, Infrastructure, Gateway)
+- Sincronização automática de transações bancárias via API Pluggy
+- Persistência de contas, items de conta e transações em PostgreSQL
+- Autenticação automática com cache de tokens em Redis
+- API RESTful com paginação
+- Arquitetura em camadas (Clean Architecture)
 
 ## Arquitetura
 
 ```
 src/main/java/com/
-├── domain/                          # Regras de negócio e interfaces
-│   ├── gateway/
-│   │   └── open_finance/
-│   │       ├── IOpenFinance.java    # Interface do gateway
-│   │       └── models/
-│   │           ├── Transaction.java
-│   │           └── TransactionPageResponse.java
-│   └── services/
-│       ├── open_finance/
-│       │   └── ITransactionSynchronizer.java
+├── application/                         # Casos de uso e DTOs
+│   ├── dto/
+│   │   ├── AccountDTO.java
+│   │   ├── AccountItemDTO.java
+│   │   └── TransactionDTO.java
+│   └── usecase/
+│       ├── accountconnection/
+│       │   ├── CreateAccountUseCase.java
+│       │   └── GetAccountUseCase.java
+│       ├── accountitem/
+│       │   ├── CreateAccountItemUseCase.java
+│       │   └── ListAccountItemUseCase.java
+│       ├── openfinance/
+│       │   └── TransactionsSynchronizerUseCase.java
 │       └── transactions/
-│           └── ITransactionList.java
-├── application/                     # Casos de uso
-│   └── services/
-│       ├── open_finance/
-│       │   └── TransactionsSynchronizer.java
-│       └── transactions/
-│           └── TransactionsList.java
-├── infrastructure/                  # Persistência
+│           └── TransactionsListUseCase.java
+├── domain/                              # Interfaces e modelos de domínio
+│   ├── gateway/openfinance/
+│   │   ├── IOpenFinance.java
+│   │   └── models/
+│   │       ├── OpenFinanceAccount.java
+│   │       ├── OpenFinanceAccountItem.java
+│   │       └── OpenFinanceTransaction.java
+│   ├── shared/
+│   │   └── PaginatedResponse.java
+│   └── usecase/                         # Interfaces dos casos de uso
+├── infrastructure/                      # Implementações de infraestrutura
+│   ├── gateway/pluggy/
+│   │   ├── PluggyGateway.java           # Implementação Open Finance
+│   │   ├── auth/
+│   │   │   ├── AuthenticationService.java
+│   │   │   ├── PluggyAuthContext.java
+│   │   │   ├── PluggyAuthInterceptor.java
+│   │   │   └── RequiresPluggyAuth.java
+│   │   └── dto/                         # DTOs da API Pluggy
 │   └── persistence/
 │       ├── entities/
+│       │   ├── AccountEntity.java
+│       │   ├── AccountItemEntity.java
 │       │   └── TransactionEntity.java
 │       └── repositories/
+│           ├── AccountRepository.java
+│           ├── AccountItemRepository.java
 │           └── TransactionRepository.java
-├── gateway/                         # Integrações externas
-│   ├── Pluggy.java                  # Implementação Open Finance
-│   └── pluggy/auth/
-│       ├── AuthenticationService.java
-│       ├── PluggyAuthContext.java
-│       ├── PluggyAuthInterceptor.java
-│       └── RequiresPluggyAuth.java
-└── resources/                       # Endpoints REST
+└── resources/                           # Endpoints REST
+    ├── AccountConnection.java
     └── TransactionsSynchronizer.java
+```
+
+## Modelo de Dados
+
+```
+Account (Conexão bancária)
+├── AccountItem (Conta corrente, poupança, etc.)
+│   └── Transaction (Transações da conta)
 ```
 
 ## Pré-requisitos
@@ -59,6 +82,8 @@ src/main/java/com/
 ### 1. Clone e configure
 
 ```bash
+git clone <repo-url>
+cd rest-json-quickstart
 cp .env.example .env
 # Edite o .env com suas credenciais da Pluggy
 ```
@@ -121,14 +146,14 @@ HIBERNATE_LOG_SQL=false
 
 ### Sincronizar Transações
 
-Sincroniza transações de uma conta bancária da Pluggy para o banco local.
+Sincroniza transações de uma conexão bancária da Pluggy para o banco local.
 
 ```bash
 POST /transactions/sync
 Content-Type: application/json
 
 {
-  "accountId": "562b795d-1653-429f-be86-74ead9502813"
+  "accountId": "fc07dc28-8372-457d-a8b8-5af0716c09df"
 }
 ```
 
@@ -141,29 +166,62 @@ Content-Type: application/json
 
 ### Listar Transações
 
-Lista transações armazenadas no banco local.
+Lista transações com paginação.
 
 ```bash
-GET /transactions?accountId=562b795d-1653-429f-be86-74ead9502813
+GET /transactions?accountId={accountItemId}&page=1&pageSize=10
 ```
 
 **Resposta (200):**
 ```json
 {
-  "total": 10,
   "page": 1,
-  "data": [
+  "pageSize": 10,
+  "total": 8,
+  "totalPages": 1,
+  "items": [
     {
-      "id": "a8534c85-53ce-4f21-94d7-50e9d2ee4957",
-      "accountId": "562b795d-1653-429f-be86-74ead9502813",
+      "id": "f3444523-eb46-446a-9f16-aa7743c48a09",
       "description": "PAGO NETFLIX SERV",
-      "amount": -58.00,
+      "amount": -58.0,
       "date": "2020-10-15T00:00:00",
       "status": "POSTED",
       "type": "DEBIT",
-      "categoryId": 1
+      "categoryId": 1,
+      "accountItem": {
+        "id": "1eba60e2-51c7-4b04-95a9-2af01b11c5a6",
+        "integrationId": "a3fb5ebf-4cf7-4726-b7c6-a0d659af401b",
+        "name": "Conta Corrente",
+        "account": {
+          "id": "3b5a6be1-be43-4a68-bb3c-baf1a0c8c9d2",
+          "name": "Nubank",
+          "primaryColor": "8a0fbe",
+          "institutionLogo": "https://cdn.pluggy.ai/assets/connector-icons/212.svg",
+          "institutionId": 612
+        }
+      }
     }
   ]
+}
+```
+
+### Buscar Conexão
+
+Busca informações de uma conexão bancária.
+
+```bash
+GET /account-connection?accountId={accountId}
+```
+
+**Resposta (200):**
+```json
+{
+  "id": "3b5a6be1-be43-4a68-bb3c-baf1a0c8c9d2",
+  "name": "Nubank",
+  "primaryColor": "8a0fbe",
+  "institutionLogo": "https://cdn.pluggy.ai/assets/connector-icons/212.svg",
+  "institutionId": 612,
+  "accountId": "fc07dc28-8372-457d-a8b8-5af0716c09df"
 }
 ```
 
@@ -180,10 +238,20 @@ A autenticação com a API Pluggy é gerenciada automaticamente:
 
 - **Quarkus 3.31** - Framework Java supersônico
 - **Hibernate ORM + Panache** - Persistência simplificada
-- **PostgreSQL** - Banco de dados
+- **PostgreSQL** - Banco de dados relacional
 - **Redis** - Cache de tokens de autenticação
 - **Jackson** - Serialização JSON
-- **SmallRye JWT** - Autenticação JWT
+- **Bean Validation** - Validação de requests
+
+## Testes
+
+```bash
+# Executar todos os testes
+./mvnw test
+
+# Executar com relatório de cobertura
+./mvnw test jacoco:report
+```
 
 ## Desenvolvimento
 
@@ -223,11 +291,18 @@ sudo apt install openjdk-21-jdk
 
 ### Erro: "Authentication failed: 500"
 
-Verifique se as credenciais da Pluggy no `.env` estão corretas e sem aspas.
+Verifique se as credenciais da Pluggy no `.env` estão corretas e sem aspas extras.
 
 ### Erro: "Unsatisfied dependency"
 
 Adicione `@ApplicationScoped` na classe que implementa a interface.
+
+### Reset do banco de dados
+
+```bash
+docker exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS transactions_db;"
+docker exec postgres psql -U postgres -c "CREATE DATABASE transactions_db;"
+```
 
 ## Licença
 
