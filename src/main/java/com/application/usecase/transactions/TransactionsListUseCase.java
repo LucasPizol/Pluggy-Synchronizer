@@ -1,4 +1,4 @@
-package com.application.use_case.transactions;
+package com.application.usecase.transactions;
 
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.transactions.ITransactionListUseCase;

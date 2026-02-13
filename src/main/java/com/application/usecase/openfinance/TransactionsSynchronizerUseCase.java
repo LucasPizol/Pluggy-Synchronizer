@@ -1,4 +1,4 @@
-package com.application.use_case.open_finance;
+package com.application.usecase.openfinance;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -6,10 +6,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.domain.gateway.open_finance.IOpenFinance;
-import com.domain.gateway.open_finance.models.Transaction;
+import com.domain.gateway.openfinance.IOpenFinance;
+import com.domain.gateway.openfinance.models.Transaction;
 import com.domain.shared.PaginatedResponse;
-import com.domain.usecase.open_finance.ITransactionSynchronizerUseCase;
+import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.infrastructure.persistence.entities.TransactionEntity;
 import com.infrastructure.persistence.repositories.TransactionRepository;
 

@@ -1,6 +1,6 @@
 package com.resources;
 
-import com.domain.usecase.open_finance.ITransactionSynchronizerUseCase;
+import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.domain.usecase.transactions.ITransactionListUseCase;
 
 import jakarta.inject.Inject;

@@ -11,8 +11,8 @@ import java.util.Arrays;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
-import com.domain.gateway.open_finance.IOpenFinance;
-import com.domain.gateway.open_finance.models.Transaction;
+import com.domain.gateway.openfinance.IOpenFinance;
+import com.domain.gateway.openfinance.models.Transaction;
 import com.domain.shared.PaginatedResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;

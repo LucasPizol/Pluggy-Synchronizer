@@ -1,8 +1,8 @@
-package com.domain.gateway.open_finance;
+package com.domain.gateway.openfinance;
 
 import java.time.LocalDate;
 
-import com.domain.gateway.open_finance.models.Transaction;
+import com.domain.gateway.openfinance.models.Transaction;
 import com.domain.shared.PaginatedResponse;
 
 public interface IOpenFinance {

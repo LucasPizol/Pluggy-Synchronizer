@@ -1,4 +1,4 @@
-package com.domain.gateway.open_finance.models;
+package com.domain.gateway.openfinance.models;
 
 import java.time.LocalDateTime;
 

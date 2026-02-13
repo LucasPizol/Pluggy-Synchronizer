@@ -1,4 +1,4 @@
-package com.domain.usecase.open_finance;
+package com.domain.usecase.openfinance;
 
 import java.time.LocalDate;
 
