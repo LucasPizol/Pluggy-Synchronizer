@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.domain.gateway.openfinance.IOpenFinance;
-import com.domain.gateway.openfinance.models.Transaction;
+import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.infrastructure.persistence.entities.TransactionEntity;
@@ -38,21 +38,22 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   @Override
   @Transactional
   public void synchronizeTransactions(String accountId, LocalDate startDate, String[] transactionIds) {
-    PaginatedResponse<Transaction> response = openFinance.listTransactions(accountId, startDate, transactionIds);
+    PaginatedResponse<OpenFinanceTransaction> response = openFinance.listTransactions(accountId, startDate,
+        transactionIds);
 
-    Transaction[] transactions = response.getItems();
+    OpenFinanceTransaction[] transactions = response.getItems();
 
     List<String> transactionIdsToCheck = Arrays.stream(transactions)
-        .map(Transaction::getId)
+        .map(OpenFinanceTransaction::getId)
         .toList();
 
     Set<String> existingIds = transactionRepository
-        .findAllByIds(transactionIdsToCheck)
+        .findAllByIntegrationIds(transactionIdsToCheck)
         .stream()
         .map(TransactionEntity::getId)
         .collect(Collectors.toSet());
 
-    for (Transaction transaction : transactions) {
+    for (OpenFinanceTransaction transaction : transactions) {
       if (existingIds.contains(transaction.getId())) {
         transactionRepository.update(
             "amount = ?1, status = ?2, date = ?3 WHERE id = ?4",
@@ -64,7 +65,6 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
       }
 
       TransactionEntity transactionEntity = new TransactionEntity(
-          transaction.getId(),
           transaction.getAccountId(),
           transaction.getDescription(),
           transaction.getAmount(),
@@ -72,7 +72,8 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
           transaction.getStatus(),
           transaction.getType(),
           1,
-          transaction.getProviderId());
+          transaction.getProviderId(),
+          transaction.getId());
 
       transactionRepository.persist(transactionEntity);
     }

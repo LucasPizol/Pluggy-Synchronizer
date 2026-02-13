@@ -34,10 +34,10 @@ public class TransactionRepository implements PanacheRepositoryBase<TransactionE
     return findById(id) != null;
   }
 
-  public List<TransactionEntity> findAllByIds(List<String> ids) {
+  public List<TransactionEntity> findAllByIntegrationIds(List<String> ids) {
     if (ids == null || ids.isEmpty()) {
       return List.of();
     }
-    return list("id IN ?1", ids);
+    return list("integrationId IN ?1", ids);
   }
 }

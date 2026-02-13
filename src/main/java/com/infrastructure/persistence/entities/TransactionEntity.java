@@ -45,12 +45,14 @@ public class TransactionEntity {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @Column(name = "integration_id", length = 50)
+  private String integrationId;
+
   public TransactionEntity() {
   }
 
-  public TransactionEntity(String id, String accountId, String description, double amount,
-      LocalDateTime date, String status, String type, Integer categoryId, String providerId) {
-    this.id = id;
+  public TransactionEntity(String accountId, String description, double amount,
+      LocalDateTime date, String status, String type, Integer categoryId, String providerId, String integrationId) {
     this.accountId = accountId;
     this.description = description;
     this.amount = amount;
@@ -59,6 +61,7 @@ public class TransactionEntity {
     this.type = type;
     this.categoryId = categoryId;
     this.providerId = providerId;
+    this.integrationId = integrationId;
     this.createdAt = LocalDateTime.now();
   }
 

@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import com.domain.gateway.openfinance.IOpenFinance;
-import com.domain.gateway.openfinance.models.Transaction;
+import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
 import com.infrastructure.persistence.entities.TransactionEntity;
 import com.infrastructure.persistence.repositories.TransactionRepository;
@@ -38,12 +38,12 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldPersistNewTransactions() {
     String accountId = "account-123";
-    Transaction transaction = new Transaction(
+    OpenFinanceTransaction transaction = new OpenFinanceTransaction(
         "tx-1", accountId, "Test transaction", 100.0,
         LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
 
-    PaginatedResponse<Transaction> response = new PaginatedResponse<>(
-        1, 10, 1L, 1, new Transaction[] { transaction });
+    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
+        1, 10, 1L, 1, new OpenFinanceTransaction[] { transaction });
 
     when(openFinance.listTransactions(accountId, null, null)).thenReturn(response);
     when(transactionRepository.findAllByIds(anyList())).thenReturn(List.of());
@@ -58,12 +58,12 @@ class TransactionsSynchronizerUseCaseTest {
   void shouldUpdateExistingTransactions() {
     String accountId = "account-123";
     String transactionId = "tx-1";
-    Transaction transaction = new Transaction(
+    OpenFinanceTransaction transaction = new OpenFinanceTransaction(
         transactionId, accountId, "Test transaction", 150.0,
         LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
 
-    PaginatedResponse<Transaction> response = new PaginatedResponse<>(
-        1, 10, 1L, 1, new Transaction[] { transaction });
+    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
+        1, 10, 1L, 1, new OpenFinanceTransaction[] { transaction });
 
     TransactionEntity existingEntity = new TransactionEntity(
         transactionId, accountId, "Test transaction", 100.0,
@@ -81,8 +81,8 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldHandleEmptyResponse() {
     String accountId = "account-123";
-    PaginatedResponse<Transaction> response = new PaginatedResponse<>(
-        1, 10, 0L, 0, new Transaction[] {});
+    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
+        1, 10, 0L, 0, new OpenFinanceTransaction[] {});
 
     when(openFinance.listTransactions(accountId, null, null)).thenReturn(response);
 
@@ -95,15 +95,15 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldPersistOnlyNewTransactionsWhenMixed() {
     String accountId = "account-123";
-    Transaction newTransaction = new Transaction(
+    OpenFinanceTransaction newTransaction = new OpenFinanceTransaction(
         "tx-new", accountId, "New transaction", 200.0,
         LocalDateTime.now(), "POSTED", "DEBIT", "Test", null);
-    Transaction existingTransaction = new Transaction(
+    OpenFinanceTransaction existingTransaction = new OpenFinanceTransaction(
         "tx-existing", accountId, "Existing transaction", 100.0,
         LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
 
-    PaginatedResponse<Transaction> response = new PaginatedResponse<>(
-        1, 10, 2L, 1, new Transaction[] { newTransaction, existingTransaction });
+    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
+        1, 10, 2L, 1, new OpenFinanceTransaction[] { newTransaction, existingTransaction });
 
     TransactionEntity existingEntity = new TransactionEntity(
         "tx-existing", accountId, "Existing transaction", 100.0,

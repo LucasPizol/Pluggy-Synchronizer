@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Transaction {
+public class OpenFinanceTransaction {
   private String id;
   private String accountId;
   private String description;
@@ -16,10 +16,11 @@ public class Transaction {
   private String category;
   private String providerId;
 
-  public Transaction() {
+  public OpenFinanceTransaction() {
   }
 
-  public Transaction(String id, String accountId, String description, double amount, LocalDateTime date, String status,
+  public OpenFinanceTransaction(String id, String accountId, String description, double amount, LocalDateTime date,
+      String status,
       String type, String category, String providerId) {
     this.id = id;
     this.accountId = accountId;
@@ -103,4 +104,5 @@ public class Transaction {
   public void setProviderId(String providerId) {
     this.providerId = providerId;
   }
+
 }

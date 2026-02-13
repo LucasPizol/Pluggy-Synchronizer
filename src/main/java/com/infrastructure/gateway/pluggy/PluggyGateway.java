@@ -12,12 +12,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import com.domain.gateway.openfinance.IOpenFinance;
-import com.domain.gateway.openfinance.models.Transaction;
+import com.domain.gateway.openfinance.models.OpenFinanceAccount;
+import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.infrastructure.gateway.pluggy.auth.PluggyAuthContext;
 import com.infrastructure.gateway.pluggy.auth.RequiresPluggyAuth;
+import com.infrastructure.gateway.pluggy.dto.PluggyAccount;
+import com.infrastructure.gateway.pluggy.dto.PluggyAccountResponse;
 import com.infrastructure.gateway.pluggy.dto.PluggyTransactionResponse;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -52,18 +55,18 @@ public class PluggyGateway implements IOpenFinance {
   }
 
   @Override
-  public PaginatedResponse<Transaction> listTransactions(String accountId) {
+  public PaginatedResponse<OpenFinanceTransaction> listTransactions(String accountId) {
     return listTransactions(accountId, null, null);
   }
 
   @Override
-  public PaginatedResponse<Transaction> listTransactions(String accountId, LocalDate startDate) {
+  public PaginatedResponse<OpenFinanceTransaction> listTransactions(String accountId, LocalDate startDate) {
     return listTransactions(accountId, startDate, null);
   }
 
   @Override
   @RequiresPluggyAuth
-  public PaginatedResponse<Transaction> listTransactions(String accountId, LocalDate startDate,
+  public PaginatedResponse<OpenFinanceTransaction> listTransactions(String accountId, LocalDate startDate,
       String[] transactionIds) {
     try {
       StringBuilder pathBuilder = new StringBuilder("/transactions")
@@ -90,15 +93,16 @@ public class PluggyGateway implements IOpenFinance {
         int totalPages = (int) pluggyTransactionResponse.getTotalPages();
         int page = (int) pluggyTransactionResponse.getPage();
 
-        Transaction[] transactions = Arrays.stream(pluggyTransactionResponse.getResults())
-            .map(pluggyTransaction -> new Transaction(pluggyTransaction.getId(), pluggyTransaction.getAccountId(),
+        OpenFinanceTransaction[] transactions = Arrays.stream(pluggyTransactionResponse.getResults())
+            .map(pluggyTransaction -> new OpenFinanceTransaction(pluggyTransaction.getId(),
+                pluggyTransaction.getAccountId(),
                 pluggyTransaction.getDescription(), pluggyTransaction.getAmount(),
                 pluggyTransaction.getDate().toLocalDateTime(),
                 pluggyTransaction.getStatus(), pluggyTransaction.getType(), pluggyTransaction.getCategory(),
                 pluggyTransaction.getProviderId()))
-            .toArray(Transaction[]::new);
+            .toArray(OpenFinanceTransaction[]::new);
 
-        return new PaginatedResponse<Transaction>(page, 500, total, totalPages, transactions);
+        return new PaginatedResponse<OpenFinanceTransaction>(page, 500, total, totalPages, transactions);
       } else if (response.statusCode() == 401) {
         throw new RuntimeException("Unauthorized - invalid token");
       } else {
@@ -108,6 +112,29 @@ public class PluggyGateway implements IOpenFinance {
     } catch (Exception e) {
       LOG.error("Falha ao listar transações", e);
       throw new RuntimeException("Failed to list transactions", e);
+    }
+  }
+
+  @Override
+  public OpenFinanceAccount getAccount(String accountId) {
+    try {
+      HttpRequest request = buildRequest("/accounts/" + accountId).GET().build();
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      PluggyAccountResponse pluggyAccountResponse = objectMapper.readValue(response.body(),
+          PluggyAccountResponse.class);
+
+      PluggyAccount pluggyAccount = pluggyAccountResponse.getAccount();
+
+      return new OpenFinanceAccount(
+          pluggyAccount.getName(),
+          pluggyAccount.getPrimaryColor(),
+          pluggyAccount.getImageUrl(),
+          pluggyAccount.getId(),
+          pluggyAccountResponse.getId());
+    } catch (Exception e) {
+      LOG.error("Falha ao buscar conta", e);
+      throw new RuntimeException("Failed to get account", e);
     }
   }
 }
