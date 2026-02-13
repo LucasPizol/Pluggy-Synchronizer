@@ -1,9 +1,9 @@
-package com.domain.services.transactions;
+package com.domain.usecase.transactions;
 
 import com.domain.shared.PaginatedResponse;
 import com.infrastructure.persistence.entities.TransactionEntity;
 
-public interface ITransactionList {
+public interface ITransactionListUseCase {
   PaginatedResponse<TransactionEntity> listTransactions(String accountId);
 
   PaginatedResponse<TransactionEntity> listTransactions(String accountId, Integer page);

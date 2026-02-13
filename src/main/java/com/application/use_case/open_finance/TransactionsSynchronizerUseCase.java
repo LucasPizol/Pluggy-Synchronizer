@@ -1,13 +1,17 @@
-package com.application.services.open_finance;
+package com.application.use_case.open_finance;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
 import com.domain.gateway.open_finance.IOpenFinance;
 import com.domain.gateway.open_finance.models.Transaction;
-import com.domain.gateway.open_finance.models.TransactionPageResponse;
-import com.domain.services.open_finance.ITransactionSynchronizer;
+import com.domain.shared.PaginatedResponse;
+import com.domain.usecase.open_finance.ITransactionSynchronizerUseCase;
 import com.infrastructure.persistence.entities.TransactionEntity;
 import com.infrastructure.persistence.repositories.TransactionRepository;
 
@@ -16,14 +20,14 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
-public class TransactionsSynchronizer implements ITransactionSynchronizer {
+public class TransactionsSynchronizerUseCase implements ITransactionSynchronizerUseCase {
   @Inject
   private IOpenFinance openFinance;
 
   @Inject
   private TransactionRepository transactionRepository;
 
-  private final Logger LOG = Logger.getLogger(TransactionsSynchronizer.class);
+  private final Logger LOG = Logger.getLogger(TransactionsSynchronizerUseCase.class);
 
   @Override
   public void synchronizeTransactions(String accountId) {
@@ -38,11 +42,33 @@ public class TransactionsSynchronizer implements ITransactionSynchronizer {
   @Override
   @Transactional
   public void synchronizeTransactions(String accountId, LocalDate startDate, String[] transactionIds) {
-    TransactionPageResponse response = openFinance.listTransactions(accountId, startDate, transactionIds);
+    PaginatedResponse<Transaction> response = openFinance.listTransactions(accountId, startDate, transactionIds);
 
     LOG.infof("Total transactions found: %d", response.getTotal());
 
-    for (Transaction transaction : response.getTransactions()) {
+    Transaction[] transactions = response.getItems();
+
+    List<String> transactionIdsToCheck = Arrays.stream(transactions)
+        .map(Transaction::getId)
+        .toList();
+
+    Set<String> existingIds = transactionRepository
+        .findAllByIds(transactionIdsToCheck)
+        .stream()
+        .map(TransactionEntity::getId)
+        .collect(Collectors.toSet());
+
+    for (Transaction transaction : transactions) {
+      if (existingIds.contains(transaction.getId())) {
+        transactionRepository.update(
+            "amount = ?1, status = ?2, date = ?3 WHERE id = ?4",
+            transaction.getAmount(),
+            transaction.getStatus(),
+            transaction.getDate(),
+            transaction.getId());
+        continue;
+      }
+
       TransactionEntity transactionEntity = new TransactionEntity(
           transaction.getId(),
           transaction.getAccountId(),

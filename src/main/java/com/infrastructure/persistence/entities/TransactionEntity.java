@@ -62,7 +62,6 @@ public class TransactionEntity {
     this.createdAt = LocalDateTime.now();
   }
 
-  // Getters
   public String getId() {
     return id;
   }
@@ -107,7 +106,6 @@ public class TransactionEntity {
     return updatedAt;
   }
 
-  // Setters
   public void setId(String id) {
     this.id = id;
   }

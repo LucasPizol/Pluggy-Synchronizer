@@ -1,4 +1,4 @@
-package com.gateway.pluggy.auth;
+package com.infrastructure.gateway.pluggy.auth;
 
 import org.jboss.logging.Logger;
 

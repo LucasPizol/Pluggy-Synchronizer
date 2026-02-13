@@ -1,4 +1,4 @@
-package com.gateway.pluggy.auth;
+package com.infrastructure.gateway.pluggy.auth;
 
 import java.net.URI;
 import java.net.http.HttpClient;

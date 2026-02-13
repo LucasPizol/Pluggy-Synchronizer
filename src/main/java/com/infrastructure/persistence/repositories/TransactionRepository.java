@@ -33,4 +33,11 @@ public class TransactionRepository implements PanacheRepositoryBase<TransactionE
   public boolean existsById(String id) {
     return findById(id) != null;
   }
+
+  public List<TransactionEntity> findAllByIds(List<String> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return List.of();
+    }
+    return list("id IN ?1", ids);
+  }
 }

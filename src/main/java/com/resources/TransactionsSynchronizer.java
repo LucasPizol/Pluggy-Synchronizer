@@ -1,7 +1,7 @@
 package com.resources;
 
-import com.domain.services.open_finance.ITransactionSynchronizer;
-import com.domain.services.transactions.ITransactionList;
+import com.domain.usecase.open_finance.ITransactionSynchronizerUseCase;
+import com.domain.usecase.transactions.ITransactionListUseCase;
 
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -22,10 +22,10 @@ import jakarta.ws.rs.core.Response;
 @Produces(MediaType.APPLICATION_JSON)
 public class TransactionsSynchronizer {
   @Inject
-  private ITransactionSynchronizer transactionSynchronizer;
+  private ITransactionSynchronizerUseCase transactionSynchronizer;
 
   @Inject
-  private ITransactionList transactionList;
+  private ITransactionListUseCase transactionList;
 
   @GET
   public Response listTransactions(

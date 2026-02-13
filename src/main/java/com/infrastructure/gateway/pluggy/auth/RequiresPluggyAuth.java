@@ -1,4 +1,4 @@
-package com.gateway.pluggy.auth;
+package com.infrastructure.gateway.pluggy.auth;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -9,6 +9,6 @@ import jakarta.interceptor.InterceptorBinding;
 
 @InterceptorBinding
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ ElementType.METHOD, ElementType.TYPE })
 public @interface RequiresPluggyAuth {
 }

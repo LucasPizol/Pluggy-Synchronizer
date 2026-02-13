@@ -1,7 +1,7 @@
-package com.application.services.transactions;
+package com.application.use_case.transactions;
 
-import com.domain.services.transactions.ITransactionList;
 import com.domain.shared.PaginatedResponse;
+import com.domain.usecase.transactions.ITransactionListUseCase;
 import com.infrastructure.persistence.entities.TransactionEntity;
 import com.infrastructure.persistence.repositories.TransactionRepository;
 
@@ -9,7 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class TransactionsList implements ITransactionList {
+public class TransactionsListUseCase implements ITransactionListUseCase {
   @Inject
   private TransactionRepository transactionRepository;
 
