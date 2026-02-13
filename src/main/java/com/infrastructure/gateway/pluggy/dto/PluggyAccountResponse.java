@@ -11,7 +11,7 @@ public class PluggyAccountResponse {
   private String status;
   private String executionStatus;
   private String clientUserId;
-  private PluggyAccount account;
+  private PluggyAccount connector;
 
   public PluggyAccountResponse() {
   }
@@ -24,7 +24,7 @@ public class PluggyAccountResponse {
     this.status = status;
     this.executionStatus = executionStatus;
     this.clientUserId = clientUserId;
-    this.account = account;
+    this.connector = account;
   }
 
   public String getId() {
@@ -47,8 +47,8 @@ public class PluggyAccountResponse {
     return clientUserId;
   }
 
-  public PluggyAccount getAccount() {
-    return account;
+  public PluggyAccount getConnector() {
+    return connector;
   }
 
   public void setId(String id) {
@@ -71,7 +71,7 @@ public class PluggyAccountResponse {
     this.clientUserId = clientUserId;
   }
 
-  public void setAccount(PluggyAccount account) {
-    this.account = account;
+  public void setConnector(PluggyAccount connector) {
+    this.connector = connector;
   }
 }

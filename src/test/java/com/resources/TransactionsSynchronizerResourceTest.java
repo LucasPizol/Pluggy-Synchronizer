@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.domain.usecase.transactions.ITransactionListUseCase;
 import com.domain.shared.PaginatedResponse;
+import com.infrastructure.persistence.entities.AccountEntity;
 import com.infrastructure.persistence.entities.TransactionEntity;
 
 import java.time.LocalDateTime;
@@ -82,9 +83,12 @@ class TransactionsSynchronizerResourceTest {
 
   @Test
   void shouldListTransactionsSuccessfully() {
+    AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
+        "account-123");
     TransactionEntity entity = new TransactionEntity(
-        "tx-1", "account-123", "Test", 100.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", 1, null);
+        account,
+        "Test", 100.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", 1, null, "tx-1");
 
     PaginatedResponse<TransactionEntity> response = new PaginatedResponse<>(
         1, 10, 1L, 1, new TransactionEntity[] { entity });

@@ -1,11 +1,19 @@
 package com.infrastructure.persistence.entities;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.ForeignKey;
 
 @Entity
 @Table(name = "transactions")
@@ -15,8 +23,17 @@ public class TransactionEntity {
   @Column(length = 36)
   private String id;
 
-  @Column(name = "account_id", nullable = false, length = 36)
-  private String accountId;
+  @PrePersist
+  public void prePersist() {
+    if (this.id == null) {
+      this.id = UUID.randomUUID().toString();
+    }
+  }
+
+  @ManyToOne
+  @JoinColumn(name = "account_item_id", nullable = false, foreignKey = @ForeignKey(name = "fk_transaction_account_item", value = ConstraintMode.CONSTRAINT))
+  @JsonIgnore
+  private AccountItemEntity accountItem;
 
   @Column(nullable = false)
   private String description;
@@ -51,9 +68,9 @@ public class TransactionEntity {
   public TransactionEntity() {
   }
 
-  public TransactionEntity(String accountId, String description, double amount,
+  public TransactionEntity(AccountItemEntity accountItem, String description, double amount,
       LocalDateTime date, String status, String type, Integer categoryId, String providerId, String integrationId) {
-    this.accountId = accountId;
+    this.accountItem = accountItem;
     this.description = description;
     this.amount = amount;
     this.date = date;
@@ -69,8 +86,8 @@ public class TransactionEntity {
     return id;
   }
 
-  public String getAccountId() {
-    return accountId;
+  public AccountItemEntity getAccountItem() {
+    return accountItem;
   }
 
   public String getDescription() {
@@ -109,12 +126,16 @@ public class TransactionEntity {
     return updatedAt;
   }
 
+  public String getIntegrationId() {
+    return integrationId;
+  }
+
   public void setId(String id) {
     this.id = id;
   }
 
-  public void setAccountId(String accountId) {
-    this.accountId = accountId;
+  public void setAccountItem(AccountItemEntity accountItem) {
+    this.accountItem = accountItem;
   }
 
   public void setDescription(String description) {
@@ -151,5 +172,9 @@ public class TransactionEntity {
 
   public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public void setIntegrationId(String integrationId) {
+    this.integrationId = integrationId;
   }
 }

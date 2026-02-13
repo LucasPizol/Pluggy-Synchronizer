@@ -9,9 +9,16 @@ import java.util.stream.Collectors;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
+import com.domain.usecase.accountconnection.ICreateAccountUseCase;
+import com.domain.usecase.accountconnection.IGetAccountUseCase;
+import com.domain.usecase.accountitem.IListAccountItemUseCase;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
+import com.infrastructure.persistence.entities.AccountEntity;
+import com.infrastructure.persistence.entities.AccountItemEntity;
 import com.infrastructure.persistence.entities.TransactionEntity;
 import com.infrastructure.persistence.repositories.TransactionRepository;
+
+import org.jboss.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -19,11 +26,21 @@ import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class TransactionsSynchronizerUseCase implements ITransactionSynchronizerUseCase {
+  private static final Logger LOG = Logger.getLogger(TransactionsSynchronizerUseCase.class);
   @Inject
   private IOpenFinance openFinance;
 
   @Inject
   private TransactionRepository transactionRepository;
+
+  @Inject
+  private IListAccountItemUseCase listAccountItemUseCase;
+
+  @Inject
+  private ICreateAccountUseCase createAccountUseCase;
+
+  @Inject
+  private IGetAccountUseCase getAccountUseCase;
 
   @Override
   public void synchronizeTransactions(String accountId) {
@@ -38,11 +55,54 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   @Override
   @Transactional
   public void synchronizeTransactions(String accountId, LocalDate startDate, String[] transactionIds) {
-    PaginatedResponse<OpenFinanceTransaction> response = openFinance.listTransactions(accountId, startDate,
-        transactionIds);
 
-    OpenFinanceTransaction[] transactions = response.getItems();
+    AccountEntity account = getAccountUseCase.getAccount(accountId);
 
+    if (account == null) {
+      account = createAccountUseCase.createAccount(accountId);
+    }
+
+    LOG.infof("Account: %s", account.getId());
+    List<AccountItemEntity> accountItems = listAccountItemUseCase.listAccountItems(account.getId());
+    LOG.infof("Account Items count: %d", accountItems.size());
+
+    for (AccountItemEntity accountItem : accountItems) {
+      PaginatedResponse<OpenFinanceTransaction> response = openFinance.listTransactions(accountItem.getIntegrationId(),
+          startDate,
+          transactionIds);
+
+      OpenFinanceTransaction[] transactions = response.getItems();
+      Set<String> existingIds = getExistingTransactionIds(transactions);
+
+      for (OpenFinanceTransaction transaction : transactions) {
+
+        if (existingIds.contains(transaction.getId())) {
+          transactionRepository.update(
+              "amount = ?1, status = ?2, date = ?3 WHERE id = ?4",
+              transaction.getAmount(),
+              transaction.getStatus(),
+              transaction.getDate(),
+              transaction.getId());
+          continue;
+        }
+
+        TransactionEntity transactionEntity = new TransactionEntity(
+            accountItem,
+            transaction.getDescription(),
+            transaction.getAmount(),
+            transaction.getDate(),
+            transaction.getStatus(),
+            transaction.getType(),
+            1,
+            transaction.getProviderId(),
+            transaction.getId());
+
+        transactionRepository.persist(transactionEntity);
+      }
+    }
+  }
+
+  private Set<String> getExistingTransactionIds(OpenFinanceTransaction[] transactions) {
     List<String> transactionIdsToCheck = Arrays.stream(transactions)
         .map(OpenFinanceTransaction::getId)
         .toList();
@@ -53,29 +113,6 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
         .map(TransactionEntity::getId)
         .collect(Collectors.toSet());
 
-    for (OpenFinanceTransaction transaction : transactions) {
-      if (existingIds.contains(transaction.getId())) {
-        transactionRepository.update(
-            "amount = ?1, status = ?2, date = ?3 WHERE id = ?4",
-            transaction.getAmount(),
-            transaction.getStatus(),
-            transaction.getDate(),
-            transaction.getId());
-        continue;
-      }
-
-      TransactionEntity transactionEntity = new TransactionEntity(
-          transaction.getAccountId(),
-          transaction.getDescription(),
-          transaction.getAmount(),
-          transaction.getDate(),
-          transaction.getStatus(),
-          transaction.getType(),
-          1,
-          transaction.getProviderId(),
-          transaction.getId());
-
-      transactionRepository.persist(transactionEntity);
-    }
+    return existingIds;
   }
 }

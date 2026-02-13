@@ -10,20 +10,20 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
 public class TransactionRepository implements PanacheRepositoryBase<TransactionEntity, String> {
-  public List<TransactionEntity> findByAccountId(String accountId) {
-    return this.findByAccountId(accountId, 1, 10);
+  public List<TransactionEntity> findByAccountItemId(String accountItemId) {
+    return this.findByAccountItemId(accountItemId, 1, 10);
   }
 
-  public List<TransactionEntity> findByAccountId(String accountId, Integer page) {
-    return this.findByAccountId(accountId, page, 10);
+  public List<TransactionEntity> findByAccountItemId(String accountItemId, Integer page) {
+    return this.findByAccountItemId(accountItemId, page, 10);
   }
 
-  public List<TransactionEntity> findByAccountId(String accountId, Integer page, Integer pageSize) {
-    return find("accountId", accountId).page(page - 1, pageSize).list();
+  public List<TransactionEntity> findByAccountItemId(String accountItemId, Integer page, Integer pageSize) {
+    return find("accountItem.id", accountItemId).page(page - 1, pageSize).list();
   }
 
-  public List<TransactionEntity> findByAccountIdAndDateAfter(String accountId, LocalDateTime startDate) {
-    return find("accountId = ?1 and date >= ?2", accountId, startDate).list();
+  public List<TransactionEntity> findByAccountItemIdAndDateAfter(String accountItemId, LocalDateTime startDate) {
+    return find("accountItem.id = ?1 and date >= ?2", accountItemId, startDate).list();
   }
 
   public List<TransactionEntity> findByCategoryId(Integer categoryId) {

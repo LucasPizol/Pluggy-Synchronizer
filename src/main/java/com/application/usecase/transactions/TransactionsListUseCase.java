@@ -1,8 +1,8 @@
 package com.application.usecase.transactions;
 
+import com.application.dto.TransactionDTO;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.transactions.ITransactionListUseCase;
-import com.infrastructure.persistence.entities.TransactionEntity;
 import com.infrastructure.persistence.repositories.TransactionRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,19 +14,25 @@ public class TransactionsListUseCase implements ITransactionListUseCase {
   private TransactionRepository transactionRepository;
 
   @Override
-  public PaginatedResponse<TransactionEntity> listTransactions(String accountId) {
-    return listTransactions(accountId, 1);
+  public PaginatedResponse<TransactionDTO> listTransactions(String accountItemId) {
+    return listTransactions(accountItemId, 1);
   }
 
   @Override
-  public PaginatedResponse<TransactionEntity> listTransactions(String accountId, Integer page) {
-    return listTransactions(accountId, page, 10);
+  public PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page) {
+    return listTransactions(accountItemId, page, 10);
   }
 
   @Override
-  public PaginatedResponse<TransactionEntity> listTransactions(String accountId, Integer page, Integer pageSize) {
-    return new PaginatedResponse<TransactionEntity>(page, pageSize,
-        transactionRepository.findByAccountId(accountId, page, pageSize).size(), 1,
-        transactionRepository.findByAccountId(accountId, page, pageSize).toArray(new TransactionEntity[0]));
+  public PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page, Integer pageSize) {
+    var entities = transactionRepository.findByAccountItemId(accountItemId, page, pageSize);
+    long total = transactionRepository.count();
+    int totalPages = (int) Math.ceil((double) total / pageSize);
+
+    TransactionDTO[] dtos = entities.stream()
+        .map(TransactionDTO::fromEntity)
+        .toArray(TransactionDTO[]::new);
+
+    return new PaginatedResponse<>(page, pageSize, total, totalPages, dtos);
   }
 }

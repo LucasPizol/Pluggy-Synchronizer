@@ -1,12 +1,12 @@
 package com.domain.usecase.transactions;
 
+import com.application.dto.TransactionDTO;
 import com.domain.shared.PaginatedResponse;
-import com.infrastructure.persistence.entities.TransactionEntity;
 
 public interface ITransactionListUseCase {
-  PaginatedResponse<TransactionEntity> listTransactions(String accountId);
+  PaginatedResponse<TransactionDTO> listTransactions(String accountItemId);
 
-  PaginatedResponse<TransactionEntity> listTransactions(String accountId, Integer page);
+  PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page);
 
-  PaginatedResponse<TransactionEntity> listTransactions(String accountId, Integer page, Integer pageSize);
+  PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page, Integer pageSize);
 }

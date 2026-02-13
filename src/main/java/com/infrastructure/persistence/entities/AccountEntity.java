@@ -1,15 +1,28 @@
 package com.infrastructure.persistence.entities;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "accounts")
 public class AccountEntity {
+
+  @PrePersist
+  public void prePersist() {
+    if (this.id == null) {
+      this.id = UUID.randomUUID().toString();
+    }
+  }
 
   @Id
   @Column(length = 36)
@@ -36,7 +49,21 @@ public class AccountEntity {
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
 
+  @OneToMany(mappedBy = "account")
+  @JsonIgnore
+  private List<AccountItemEntity> accountItems;
+
   public AccountEntity() {
+  }
+
+  public AccountEntity(String name, String primaryColor, String institutionLogo,
+      Integer institutionId, String accountId) {
+    this.name = name;
+    this.primaryColor = primaryColor;
+    this.institutionLogo = institutionLogo;
+    this.institutionId = institutionId;
+    this.accountId = accountId;
+    this.createdAt = LocalDateTime.now();
   }
 
   public AccountEntity(String id, String name, String primaryColor, String institutionLogo,
@@ -80,6 +107,10 @@ public class AccountEntity {
 
   public LocalDateTime getUpdatedAt() {
     return updatedAt;
+  }
+
+  public List<AccountItemEntity> getAccountItems() {
+    return accountItems;
   }
 
   public void setId(String id) {

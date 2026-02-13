@@ -13,6 +13,7 @@ import org.jboss.logging.Logger;
 
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceAccount;
+import com.domain.gateway.openfinance.models.OpenFinanceAccountItem;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,6 +21,8 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.infrastructure.gateway.pluggy.auth.PluggyAuthContext;
 import com.infrastructure.gateway.pluggy.auth.RequiresPluggyAuth;
 import com.infrastructure.gateway.pluggy.dto.PluggyAccount;
+import com.infrastructure.gateway.pluggy.dto.PluggyAccountItem;
+import com.infrastructure.gateway.pluggy.dto.PluggyAccountItemResponse;
 import com.infrastructure.gateway.pluggy.dto.PluggyAccountResponse;
 import com.infrastructure.gateway.pluggy.dto.PluggyTransactionResponse;
 
@@ -116,15 +119,18 @@ public class PluggyGateway implements IOpenFinance {
   }
 
   @Override
+  @RequiresPluggyAuth
   public OpenFinanceAccount getAccount(String accountId) {
     try {
-      HttpRequest request = buildRequest("/accounts/" + accountId).GET().build();
+      HttpRequest request = buildRequest("/items/" + accountId).GET().build();
       HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
       PluggyAccountResponse pluggyAccountResponse = objectMapper.readValue(response.body(),
           PluggyAccountResponse.class);
 
-      PluggyAccount pluggyAccount = pluggyAccountResponse.getAccount();
+      LOG.infof("Account response: %s", response.body());
+
+      PluggyAccount pluggyAccount = pluggyAccountResponse.getConnector();
 
       return new OpenFinanceAccount(
           pluggyAccount.getName(),
@@ -135,6 +141,31 @@ public class PluggyGateway implements IOpenFinance {
     } catch (Exception e) {
       LOG.error("Falha ao buscar conta", e);
       throw new RuntimeException("Failed to get account", e);
+    }
+  }
+
+  @Override
+  @RequiresPluggyAuth
+  public OpenFinanceAccountItem[] listAccountItems(String accountId) {
+    try {
+      HttpRequest request = buildRequest("/accounts?itemId=" + accountId).GET().build();
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+      LOG.infof("Item Response response: %s", response.body());
+
+      PluggyAccountItemResponse pluggyAccountItemResponse = objectMapper.readValue(response.body(),
+          PluggyAccountItemResponse.class);
+
+      PluggyAccountItem[] pluggyAccountItems = pluggyAccountItemResponse.getResults();
+
+      return Arrays.stream(pluggyAccountItems)
+          .map(pluggyAccountItem -> new OpenFinanceAccountItem(
+              pluggyAccountItem.getId(),
+              pluggyAccountItem.getName(),
+              pluggyAccountItem.getBalance()))
+          .toArray(OpenFinanceAccountItem[]::new);
+    } catch (Exception e) {
+      LOG.error("Falha ao listar contas", e);
+      throw new RuntimeException("Failed to list account items", e);
     }
   }
 }
