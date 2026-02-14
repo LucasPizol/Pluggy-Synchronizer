@@ -6,6 +6,7 @@ import com.domain.usecase.accountconnection.IUpsertAccountUseCase;
 import com.domain.usecase.cashflow.IUpsertCashFlowUseCase;
 import com.domain.usecase.openfinance.IAccountItemSynchronizerUseCase;
 import com.domain.usecase.openfinance.IAccountSynchronizerUseCase;
+import com.domain.usecase.openfinance.ICategorySynchronizerUseCase;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.domain.entities.AccountEntity;
 import com.domain.entities.CashFlowEntity;
@@ -32,6 +33,9 @@ public class AccountSynchronizerUseCase implements IAccountSynchronizerUseCase {
   private ITransactionSynchronizerUseCase transactionSynchronizerUseCase;
 
   @Inject
+  private ICategorySynchronizerUseCase categorySynchronizerUseCase;
+
+  @Inject
   private IOpenFinance openFinance;
 
   @Override
@@ -56,6 +60,10 @@ public class AccountSynchronizerUseCase implements IAccountSynchronizerUseCase {
     LOG.infof("Synchronizing transactions");
 
     transactionSynchronizerUseCase.synchronizeTransactions(account);
+
+    LOG.infof("Synchronizing categories");
+
+    categorySynchronizerUseCase.synchronizeCategories(account);
 
     return account;
   }

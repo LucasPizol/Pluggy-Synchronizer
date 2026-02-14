@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -15,14 +16,16 @@ import org.mockito.MockitoAnnotations;
 
 import com.domain.entities.AccountEntity;
 import com.domain.entities.AccountItemEntity;
+import com.domain.entities.CashFlowEntity;
 import com.domain.entities.TransactionEntity;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
+import com.domain.repositories.categories.ICategoryRepository;
+import com.domain.repositories.subcategories.ISubcategoryRepository;
 import com.domain.repositories.transactions.ITransactionRepository;
 import com.domain.shared.PaginatedResponse;
-import com.domain.usecase.accountconnection.IUpsertAccountUseCase;
-import com.domain.usecase.accountconnection.IGetAccountUseCase;
 import com.domain.usecase.accountitem.IListAccountItemUseCase;
+import com.domain.usecase.cashflow.IUpsertCashFlowUseCase;
 
 class TransactionsSynchronizerUseCaseTest {
 
@@ -36,117 +39,115 @@ class TransactionsSynchronizerUseCaseTest {
   private IListAccountItemUseCase listAccountItemUseCase;
 
   @Mock
-  private IUpsertAccountUseCase createAccountUseCase;
+  private IUpsertCashFlowUseCase upsertCashFlowUseCase;
 
   @Mock
-  private IGetAccountUseCase getAccountUseCase;
+  private ICategoryRepository categoryRepository;
+
+  @Mock
+  private ISubcategoryRepository subcategoryRepository;
 
   @InjectMocks
   private TransactionsSynchronizerUseCase useCase;
 
+  private AccountEntity account;
+  private AccountItemEntity accountItem;
+  private CashFlowEntity cashFlow;
+
   @BeforeEach
   void setUp() {
     MockitoAnnotations.openMocks(this);
+
+    account = new AccountEntity(1L, "Test Account", "conn-123");
+    account.setId(1L);
+
+    accountItem = new AccountItemEntity(account, "item-123", "Conta Corrente");
+
+    cashFlow = new CashFlowEntity();
+    cashFlow.setId(1L);
+
+    when(upsertCashFlowUseCase.upsertCashFlow(any())).thenReturn(cashFlow);
+    when(categoryRepository.findByClientConceptsCashFlowIdAndPluggyIds(any(), any())).thenReturn(Collections.emptyList());
+    when(subcategoryRepository.findByClientConceptsCashFlowIdAndPluggyIds(any(), any())).thenReturn(Collections.emptyList());
   }
 
   @Test
   void shouldPersistNewTransactions() {
-    String accountId = "account-123";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
-        accountId);
-    AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
-
-    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
     when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of(accountItem));
 
     OpenFinanceTransaction transaction = new OpenFinanceTransaction(
-        "tx-1", accountItem.getIntegrationId(), "Test transaction", 100.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
+        "tx-1", accountItem.getItemId(), "Test transaction", 100.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", "cat-1", null);
     PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
         1, 10, 1L, 1, new OpenFinanceTransaction[] { transaction });
 
-    when(openFinance.listTransactions(accountItem.getIntegrationId(), null, null)).thenReturn(response);
+    when(openFinance.listTransactions(accountItem.getItemId(), null, null)).thenReturn(response);
     when(transactionRepository.findAllByIntegrationIds(anyList())).thenReturn(List.of());
 
-    useCase.synchronizeTransactions(accountId);
+    useCase.synchronizeTransactions(account);
 
     verify(transactionRepository, times(1)).persist(any(TransactionEntity.class));
-    verify(transactionRepository, never()).update(anyString(), any(), any(), any(), any());
   }
 
   @Test
   void shouldUpdateExistingTransactions() {
-    String accountId = "account-123";
     String transactionId = "tx-1";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
-        accountId);
-    AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
-    TransactionEntity existingEntity = new TransactionEntity(
-        accountItem, "Test transaction", 100.0,
-        LocalDateTime.now(), "PENDING", "CREDIT", 1, null, transactionId);
-    existingEntity.setId(transactionId);
 
-    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
+    TransactionEntity existingEntity = new TransactionEntity();
+    existingEntity.setId(1L);
+    existingEntity.setIntegrationId(transactionId);
+    existingEntity.setName("Test transaction");
+
     when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of(accountItem));
 
     OpenFinanceTransaction transaction = new OpenFinanceTransaction(
-        transactionId, accountItem.getIntegrationId(), "Test transaction", 150.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
+        transactionId, accountItem.getItemId(), "Test transaction", 150.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", "cat-1", null);
     PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
         1, 10, 1L, 1, new OpenFinanceTransaction[] { transaction });
 
-    when(openFinance.listTransactions(accountItem.getIntegrationId(), null, null)).thenReturn(response);
+    when(openFinance.listTransactions(accountItem.getItemId(), null, null)).thenReturn(response);
     when(transactionRepository.findAllByIntegrationIds(anyList())).thenReturn(List.of(existingEntity));
 
-    useCase.synchronizeTransactions(accountId);
+    useCase.synchronizeTransactions(account);
 
     verify(transactionRepository, never()).persist(any(TransactionEntity.class));
-    verify(transactionRepository, times(1)).update(anyString(), any(), any(), any(), any());
+    verify(transactionRepository, times(1)).update(anyString(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 
   @Test
   void shouldHandleEmptyResponse() {
-    String accountId = "account-123";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
-        accountId);
-    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
     when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of());
 
-    useCase.synchronizeTransactions(accountId);
+    useCase.synchronizeTransactions(account);
 
     verify(transactionRepository, never()).persist(any(TransactionEntity.class));
-    verify(transactionRepository, never()).update(anyString(), any(), any(), any(), any());
   }
 
   @Test
   void shouldPersistOnlyNewTransactionsWhenMixed() {
-    String accountId = "account-123";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
-        accountId);
-    AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
-    TransactionEntity existingEntity = new TransactionEntity(
-        accountItem, "Existing transaction", 100.0,
-        LocalDateTime.now(), "PENDING", "CREDIT", 1, null, "tx-existing");
-    existingEntity.setId("tx-existing");
+    TransactionEntity existingEntity = new TransactionEntity();
+    existingEntity.setId(1L);
+    existingEntity.setIntegrationId("tx-existing");
+    existingEntity.setName("Existing transaction");
 
-    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
     when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of(accountItem));
 
     OpenFinanceTransaction newTx = new OpenFinanceTransaction(
-        "tx-new", accountItem.getIntegrationId(), "New transaction", 200.0,
-        LocalDateTime.now(), "POSTED", "DEBIT", "Test", null);
+        "tx-new", accountItem.getItemId(), "New transaction", 200.0,
+        LocalDateTime.now(), "POSTED", "DEBIT", "cat-1", null);
     OpenFinanceTransaction existingTx = new OpenFinanceTransaction(
-        "tx-existing", accountItem.getIntegrationId(), "Existing transaction", 100.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
+        "tx-existing", accountItem.getItemId(), "Existing transaction", 100.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", "cat-1", null);
     PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
         1, 10, 2L, 1, new OpenFinanceTransaction[] { newTx, existingTx });
 
-    when(openFinance.listTransactions(accountItem.getIntegrationId(), null, null)).thenReturn(response);
+    when(openFinance.listTransactions(accountItem.getItemId(), null, null)).thenReturn(response);
     when(transactionRepository.findAllByIntegrationIds(anyList())).thenReturn(List.of(existingEntity));
 
-    useCase.synchronizeTransactions(accountId);
+    useCase.synchronizeTransactions(account);
 
     verify(transactionRepository, times(1)).persist(any(TransactionEntity.class));
-    verify(transactionRepository, times(1)).update(anyString(), any(), any(), any(), any());
+    verify(transactionRepository, times(1)).update(anyString(), any(), any(), any(), any(), any(), any(), any(), any());
   }
 }

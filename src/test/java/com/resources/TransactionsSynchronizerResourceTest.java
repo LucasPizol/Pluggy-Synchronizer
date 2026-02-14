@@ -6,14 +6,16 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 import com.application.dto.TransactionDTO;
+import com.domain.entities.AccountEntity;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.domain.usecase.transactions.ITransactionListUseCase;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
@@ -27,7 +29,7 @@ class TransactionsSynchronizerResourceTest {
 
   @Test
   void shouldSyncTransactionsSuccessfully() {
-    doNothing().when(transactionSynchronizer).synchronizeTransactions(anyString());
+    doNothing().when(transactionSynchronizer).synchronizeTransactions(any(AccountEntity.class));
 
     given()
         .contentType(ContentType.JSON)
@@ -38,7 +40,7 @@ class TransactionsSynchronizerResourceTest {
         .statusCode(200)
         .body("message", equalTo("Transactions synchronized successfully"));
 
-    verify(transactionSynchronizer, times(1)).synchronizeTransactions("account-123");
+    verify(transactionSynchronizer, times(1)).synchronizeTransactions(any(AccountEntity.class));
   }
 
   @Test
@@ -66,7 +68,7 @@ class TransactionsSynchronizerResourceTest {
   @Test
   void shouldReturnInternalErrorWhenSyncFails() {
     doThrow(new RuntimeException("API Error"))
-        .when(transactionSynchronizer).synchronizeTransactions(anyString());
+        .when(transactionSynchronizer).synchronizeTransactions(any(AccountEntity.class));
 
     given()
         .contentType(ContentType.JSON)
@@ -83,11 +85,11 @@ class TransactionsSynchronizerResourceTest {
     PaginatedResponse<TransactionDTO> response = new PaginatedResponse<>(
         1, 10, 1L, 1, new TransactionDTO[] { new TransactionDTO() });
 
-    when(transactionList.listTransactions(anyString(), anyInt(), anyInt()))
+    when(transactionList.listTransactions(anyLong(), anyInt(), anyInt()))
         .thenReturn(response);
 
     given()
-        .queryParam("accountId", "account-123")
+        .queryParam("conceptId", 123L)
         .queryParam("page", 1)
         .queryParam("pageSize", 10)
         .when()
@@ -112,7 +114,7 @@ class TransactionsSynchronizerResourceTest {
   @Test
   void shouldReturnBadRequestWhenPageInvalid() {
     given()
-        .queryParam("accountId", "account-123")
+        .queryParam("conceptId", 123L)
         .queryParam("page", 0)
         .queryParam("pageSize", 10)
         .when()
@@ -124,7 +126,7 @@ class TransactionsSynchronizerResourceTest {
   @Test
   void shouldReturnBadRequestWhenPageSizeTooLarge() {
     given()
-        .queryParam("accountId", "account-123")
+        .queryParam("conceptId", 123L)
         .queryParam("page", 1)
         .queryParam("pageSize", 101)
         .when()

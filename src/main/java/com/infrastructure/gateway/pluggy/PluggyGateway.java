@@ -14,6 +14,7 @@ import org.jboss.logging.Logger;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceAccount;
 import com.domain.gateway.openfinance.models.OpenFinanceAccountItem;
+import com.domain.gateway.openfinance.models.OpenFinanceCategory;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -24,6 +25,7 @@ import com.infrastructure.gateway.pluggy.dto.PluggyAccount;
 import com.infrastructure.gateway.pluggy.dto.PluggyAccountItem;
 import com.infrastructure.gateway.pluggy.dto.PluggyAccountItemResponse;
 import com.infrastructure.gateway.pluggy.dto.PluggyAccountResponse;
+import com.infrastructure.gateway.pluggy.dto.PluggyCategoriesResponse;
 import com.infrastructure.gateway.pluggy.dto.PluggyTransactionResponse;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -166,6 +168,47 @@ public class PluggyGateway implements IOpenFinance {
     } catch (Exception e) {
       LOG.error("Falha ao listar contas", e);
       throw new RuntimeException("Failed to list account items", e);
+    }
+  }
+
+  @Override
+  @RequiresPluggyAuth
+  public PaginatedResponse<OpenFinanceCategory> listCategories(int page) {
+    try {
+      String path = "/categories?page=" + page;
+      HttpRequest request = buildRequest(path).GET().build();
+      HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+      if (response.statusCode() == 200) {
+        PluggyCategoriesResponse pluggyResponse = objectMapper.readValue(response.body(),
+            PluggyCategoriesResponse.class);
+
+        OpenFinanceCategory[] categories = pluggyResponse.getResults() == null
+            ? new OpenFinanceCategory[0]
+            : Arrays.stream(pluggyResponse.getResults())
+                .map(p -> new OpenFinanceCategory(
+                    p.getId(),
+                    p.getDescription(),
+                    p.getDescriptionTranslated(),
+                    p.getParentId(),
+                    p.getParentDescription()))
+                .toArray(OpenFinanceCategory[]::new);
+
+        return new PaginatedResponse<>(
+            pluggyResponse.getPage(),
+            500,
+            pluggyResponse.getTotal(),
+            pluggyResponse.getTotalPages(),
+            categories);
+      } else if (response.statusCode() == 401) {
+        throw new RuntimeException("Unauthorized - invalid token");
+      } else {
+        LOG.errorf("Failed to list categories: %d - %s", response.statusCode(), response.body());
+        throw new RuntimeException("Failed to list categories: " + response.statusCode());
+      }
+    } catch (Exception e) {
+      LOG.error("Falha ao listar categorias", e);
+      throw new RuntimeException("Failed to list categories", e);
     }
   }
 }
