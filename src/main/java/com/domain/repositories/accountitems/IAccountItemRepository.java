@@ -11,4 +11,6 @@ public interface IAccountItemRepository {
   AccountItemEntity findByIntegrationId(String integrationId);
 
   List<AccountItemEntity> findByAccountId(String accountId);
+
+  AccountItemEntity findById(String id);
 }

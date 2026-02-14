@@ -20,7 +20,7 @@ import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.repositories.transactions.ITransactionRepository;
 import com.domain.shared.PaginatedResponse;
-import com.domain.usecase.accountconnection.ICreateAccountUseCase;
+import com.domain.usecase.accountconnection.IUpsertAccountUseCase;
 import com.domain.usecase.accountconnection.IGetAccountUseCase;
 import com.domain.usecase.accountitem.IListAccountItemUseCase;
 
@@ -36,7 +36,7 @@ class TransactionsSynchronizerUseCaseTest {
   private IListAccountItemUseCase listAccountItemUseCase;
 
   @Mock
-  private ICreateAccountUseCase createAccountUseCase;
+  private IUpsertAccountUseCase createAccountUseCase;
 
   @Mock
   private IGetAccountUseCase getAccountUseCase;
@@ -52,7 +52,8 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldPersistNewTransactions() {
     String accountId = "account-123";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
+        accountId);
     AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
 
     when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
@@ -77,7 +78,8 @@ class TransactionsSynchronizerUseCaseTest {
   void shouldUpdateExistingTransactions() {
     String accountId = "account-123";
     String transactionId = "tx-1";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
+        accountId);
     AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
     TransactionEntity existingEntity = new TransactionEntity(
         accountItem, "Test transaction", 100.0,
@@ -105,7 +107,8 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldHandleEmptyResponse() {
     String accountId = "account-123";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
+        accountId);
     when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
     when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of());
 
@@ -118,7 +121,8 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldPersistOnlyNewTransactionsWhenMixed() {
     String accountId = "account-123";
-    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1,
+        accountId);
     AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
     TransactionEntity existingEntity = new TransactionEntity(
         accountItem, "Existing transaction", 100.0,

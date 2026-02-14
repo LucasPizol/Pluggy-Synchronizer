@@ -1,22 +1,22 @@
 package com.application.usecase.accountitem;
 
-import com.domain.usecase.accountitem.ICreateAccountItemUseCase;
 import com.domain.entities.AccountItemEntity;
-import com.domain.entities.AccountEntity;
 import com.domain.repositories.accountitems.IAccountItemRepository;
+import com.domain.usecase.accountitem.IUpdateAccountItemUseCase;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class CreateAccountItemUseCase implements ICreateAccountItemUseCase {
+public class UpdateAccountItemUseCase implements IUpdateAccountItemUseCase {
+
   @Inject
   private IAccountItemRepository accountItemRepository;
 
   @Override
-  public AccountItemEntity createAccountItem(AccountEntity account, String integrationId, String name) {
-    AccountItemEntity accountItem = new AccountItemEntity(
-        account, integrationId, name);
+  public AccountItemEntity updateAccountItem(String accountItemId, String name) {
+    AccountItemEntity accountItem = accountItemRepository.findById(accountItemId);
+    accountItem.setName(name);
     accountItemRepository.persist(accountItem);
     return accountItem;
   }

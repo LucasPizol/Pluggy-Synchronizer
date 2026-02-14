@@ -9,8 +9,6 @@ import java.util.stream.Collectors;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
 import com.domain.shared.PaginatedResponse;
-import com.domain.usecase.accountconnection.ICreateAccountUseCase;
-import com.domain.usecase.accountconnection.IGetAccountUseCase;
 import com.domain.usecase.accountitem.IListAccountItemUseCase;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.domain.entities.AccountEntity;
@@ -36,32 +34,19 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   @Inject
   private IListAccountItemUseCase listAccountItemUseCase;
 
-  @Inject
-  private ICreateAccountUseCase createAccountUseCase;
-
-  @Inject
-  private IGetAccountUseCase getAccountUseCase;
-
   @Override
-  public void synchronizeTransactions(String accountId) {
-    synchronizeTransactions(accountId, null, null);
+  public void synchronizeTransactions(AccountEntity account) {
+    synchronizeTransactions(account, null, null);
   }
 
   @Override
-  public void synchronizeTransactions(String accountId, LocalDate startDate) {
-    synchronizeTransactions(accountId, startDate, null);
+  public void synchronizeTransactions(AccountEntity account, LocalDate startDate) {
+    synchronizeTransactions(account, startDate, null);
   }
 
   @Override
   @Transactional
-  public void synchronizeTransactions(String accountId, LocalDate startDate, String[] transactionIds) {
-
-    AccountEntity account = getAccountUseCase.getAccount(accountId);
-
-    if (account == null) {
-      account = createAccountUseCase.createAccount(accountId);
-    }
-
+  public void synchronizeTransactions(AccountEntity account, LocalDate startDate, String[] transactionIds) {
     LOG.infof("Account: %s", account.getId());
     List<AccountItemEntity> accountItems = listAccountItemUseCase.listAccountItems(account.getId());
     LOG.infof("Account Items count: %d", accountItems.size());
