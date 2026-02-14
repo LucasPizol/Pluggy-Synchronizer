@@ -25,7 +25,7 @@ public class SynchronizeCashFlow {
   public Response synchronizeCashFlow(@Valid SynchronizeCashFlowDTO dto) {
     try {
 
-      accountSynchronizerUseCase.synchronizeAccount(dto.getConceptId(), dto.getCashFlowId(), dto.getAccountId());
+      accountSynchronizerUseCase.synchronizeAccount(dto.getConceptId(), dto.getAccountId());
 
       return Response.ok().build();
     } catch (Exception e) {

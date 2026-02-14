@@ -7,9 +7,6 @@ public class SynchronizeCashFlowDTO {
   @NotNull(message = "conceptId is required")
   private Long conceptId;
 
-  @NotNull(message = "cashFlowId is required")
-  private Long cashFlowId;
-
   @NotBlank(message = "accountId is required")
   private String accountId;
 
@@ -18,10 +15,6 @@ public class SynchronizeCashFlowDTO {
 
   public Long getConceptId() {
     return conceptId;
-  }
-
-  public Long getCashFlowId() {
-    return cashFlowId;
   }
 
   public String getAccountId() {
