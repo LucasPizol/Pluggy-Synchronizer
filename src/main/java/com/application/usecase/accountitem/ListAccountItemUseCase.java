@@ -15,7 +15,7 @@ public class ListAccountItemUseCase implements IListAccountItemUseCase {
   private IAccountItemRepository accountItemRepository;
 
   @Override
-  public List<AccountItemEntity> listAccountItems(String accountId) {
+  public List<AccountItemEntity> listAccountItems(Long accountId) {
     return accountItemRepository.findByAccountId(accountId);
   }
 }

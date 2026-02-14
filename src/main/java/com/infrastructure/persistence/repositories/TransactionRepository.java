@@ -1,6 +1,6 @@
 package com.infrastructure.persistence.repositories;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import com.domain.entities.TransactionEntity;
@@ -12,7 +12,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
 @ApplicationScoped
-public class TransactionRepository implements ITransactionRepository, PanacheRepositoryBase<TransactionEntity, String> {
+public class TransactionRepository implements ITransactionRepository, PanacheRepositoryBase<TransactionEntity, Long> {
 
   @PersistenceContext
   EntityManager entityManager;
@@ -23,7 +23,7 @@ public class TransactionRepository implements ITransactionRepository, PanacheRep
   }
 
   @Override
-  public TransactionEntity findById(String id) {
+  public TransactionEntity findById(Long id) {
     return entityManager.find(TransactionEntity.class, id);
   }
 
@@ -38,21 +38,43 @@ public class TransactionRepository implements ITransactionRepository, PanacheRep
   }
 
   @Override
-  public List<TransactionEntity> findByAccountItemId(String accountItemId, Integer page, Integer pageSize) {
-    return find("accountItem.id", accountItemId).page(page - 1, pageSize).list();
+  public List<TransactionEntity> findByCashFlowId(Long cashFlowId, Integer page, Integer pageSize) {
+    int first = (page - 1) * pageSize;
+    return entityManager
+        .createQuery(
+            "SELECT t FROM TransactionEntity t WHERE t.cashFlow.id = :cashFlowId ORDER BY t.transactionDate DESC",
+            TransactionEntity.class)
+        .setParameter("cashFlowId", cashFlowId)
+        .setFirstResult(first)
+        .setMaxResults(pageSize)
+        .getResultList();
   }
 
-  public List<TransactionEntity> findByAccountItemIdAndDateAfter(String accountItemId, LocalDateTime startDate) {
-    return find("accountItem.id = ?1 and date >= ?2", accountItemId, startDate).list();
+  public List<TransactionEntity> findByCashFlowIdAndDateAfter(Long cashFlowId, LocalDate startDate) {
+    return entityManager
+        .createQuery(
+            "SELECT t FROM TransactionEntity t WHERE t.cashFlow.id = :cashFlowId AND t.transactionDate >= :startDate",
+            TransactionEntity.class)
+        .setParameter("cashFlowId", cashFlowId)
+        .setParameter("startDate", startDate)
+        .getResultList();
   }
 
-  public List<TransactionEntity> findByCategoryId(Integer categoryId) {
-    return find("categoryId", categoryId).list();
+  public List<TransactionEntity> findByCategoryId(Long categoryId) {
+    return entityManager
+        .createQuery(
+            "SELECT t FROM TransactionEntity t WHERE t.clientConceptsCashFlowCategoryId = :categoryId",
+            TransactionEntity.class)
+        .setParameter("categoryId", categoryId)
+        .getResultList();
   }
 
   @Override
-  public long countByAccountItemId(String accountItemId) {
-    return count("accountItem.id", accountItemId);
+  public long countByCashFlowId(Long cashFlowId) {
+    return entityManager
+        .createQuery("SELECT COUNT(t) FROM TransactionEntity t WHERE t.cashFlow.id = :cashFlowId", Long.class)
+        .setParameter("cashFlowId", cashFlowId)
+        .getSingleResult();
   }
 
   @Override
@@ -60,11 +82,19 @@ public class TransactionRepository implements ITransactionRepository, PanacheRep
     if (ids == null || ids.isEmpty()) {
       return List.of();
     }
-    return list("integrationId IN ?1", ids);
+    return entityManager
+        .createQuery("SELECT t FROM TransactionEntity t WHERE t.integrationId IN :ids", TransactionEntity.class)
+        .setParameter("ids", ids)
+        .getResultList();
   }
 
   @Override
-  public boolean existsById(String id) {
+  public boolean existsById(Long id) {
     return findById(id) != null;
+  }
+
+  @Override
+  public long deleteAll() {
+    return entityManager.createQuery("DELETE FROM TransactionEntity").executeUpdate();
   }
 }

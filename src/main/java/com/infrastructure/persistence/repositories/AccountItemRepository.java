@@ -7,22 +7,52 @@ import com.domain.repositories.accountitems.IAccountItemRepository;
 
 import io.quarkus.hibernate.orm.panache.PanacheRepositoryBase;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @ApplicationScoped
-public class AccountItemRepository implements IAccountItemRepository, PanacheRepositoryBase<AccountItemEntity, String> {
+public class AccountItemRepository implements IAccountItemRepository, PanacheRepositoryBase<AccountItemEntity, Long> {
+
+  @PersistenceContext
+  EntityManager entityManager;
 
   @Override
   public void persist(AccountItemEntity entity) {
-    PanacheRepositoryBase.super.persist(entity);
+    entityManager.persist(entity);
   }
 
   @Override
-  public AccountItemEntity findByIntegrationId(String integrationId) {
-    return find("integrationId", integrationId).firstResult();
+  public void update(AccountItemEntity entity) {
+    entityManager.merge(entity);
   }
 
   @Override
-  public List<AccountItemEntity> findByAccountId(String accountId) {
-    return find("account.id", accountId).list();
+  public AccountItemEntity findById(Long id) {
+    return entityManager.find(AccountItemEntity.class, id);
+  }
+
+  @Override
+  public AccountItemEntity findByItemId(String itemId) {
+    var list = entityManager
+        .createQuery("SELECT a FROM AccountItemEntity a WHERE a.itemId = :itemId",
+            AccountItemEntity.class)
+        .setParameter("itemId", itemId)
+        .setMaxResults(1)
+        .getResultList();
+    return list.isEmpty() ? null : list.get(0);
+  }
+
+  @Override
+  public List<AccountItemEntity> findByAccountId(Long accountId) {
+    return entityManager
+        .createQuery("SELECT a FROM AccountItemEntity a WHERE a.account.id = :accountId",
+            AccountItemEntity.class)
+        .setParameter("accountId", accountId)
+        .getResultList();
+  }
+
+  @Override
+  public long deleteAll() {
+    return entityManager.createQuery("DELETE FROM AccountItemEntity").executeUpdate();
   }
 }

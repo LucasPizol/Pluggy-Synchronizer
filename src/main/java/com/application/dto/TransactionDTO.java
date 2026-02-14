@@ -1,83 +1,145 @@
 package com.application.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.domain.entities.TransactionEntity;
 
 public class TransactionDTO {
-  private String id;
-  private String description;
-  private double amount;
-  private LocalDateTime date;
-  private String status;
-  private String type;
-  private Integer categoryId;
-  private String providerId;
-  private String integrationId;
+  private Long id;
+  private boolean blocked;
+  private String details;
+  private String entryMode;
+  private Integer installmentNumber;
+  private String name;
+  private String originalValueCurrency;
+  private long originalValueSubcents;
+  private String tempValueCurrency;
+  private long tempValueSubcents;
+  private LocalDate transactionDate;
+  private String transactionType;
+  private String valueCurrency;
+  private long valueSubcents;
   private LocalDateTime createdAt;
-  private AccountItemDTO accountItem;
+  private LocalDateTime updatedAt;
+  private Long cashFlowId;
+  private Long clientConceptsCashFlowCategoryId;
+  private Long clientConceptsCashFlowPurchaseId;
+  private Long clientConceptsCashFlowSubcategoryId;
+  private String integrationId;
 
   public TransactionDTO() {
   }
 
   public static TransactionDTO fromEntity(TransactionEntity entity) {
-    if (entity == null) return null;
+    if (entity == null)
+      return null;
     TransactionDTO dto = new TransactionDTO();
     dto.id = entity.getId();
-    dto.description = entity.getDescription();
-    dto.amount = entity.getAmount();
-    dto.date = entity.getDate();
-    dto.status = entity.getStatus();
-    dto.type = entity.getType();
-    dto.categoryId = entity.getCategoryId();
-    dto.providerId = entity.getProviderId();
-    dto.integrationId = entity.getIntegrationId();
+    dto.blocked = entity.isBlocked();
+    dto.details = entity.getDetails();
+    dto.entryMode = entity.getEntryMode();
+    dto.installmentNumber = entity.getInstallmentNumber();
+    dto.name = entity.getName();
+    dto.originalValueCurrency = entity.getOriginalValueCurrency();
+    dto.originalValueSubcents = entity.getOriginalValueSubcents();
+    dto.tempValueCurrency = entity.getTempValueCurrency();
+    dto.tempValueSubcents = entity.getTempValueSubcents();
+    dto.transactionDate = entity.getTransactionDate();
+    dto.transactionType = entity.getTransactionType();
+    dto.valueCurrency = entity.getValueCurrency();
+    dto.valueSubcents = entity.getValueSubcents();
     dto.createdAt = entity.getCreatedAt();
-    dto.accountItem = AccountItemDTO.fromEntity(entity.getAccountItem());
+    dto.updatedAt = entity.getUpdatedAt();
+    dto.cashFlowId = entity.getCashFlow() != null ? entity.getCashFlow().getId() : null;
+    dto.clientConceptsCashFlowCategoryId = entity.getClientConceptsCashFlowCategoryId();
+    dto.clientConceptsCashFlowPurchaseId = entity.getClientConceptsCashFlowPurchaseId();
+    dto.clientConceptsCashFlowSubcategoryId = entity.getClientConceptsCashFlowSubcategoryId();
+    dto.integrationId = entity.getIntegrationId();
     return dto;
   }
 
-  public String getId() {
+  public Long getId() {
     return id;
   }
 
-  public String getDescription() {
-    return description;
+  public boolean isBlocked() {
+    return blocked;
   }
 
-  public double getAmount() {
-    return amount;
+  public String getDetails() {
+    return details;
   }
 
-  public LocalDateTime getDate() {
-    return date;
+  public String getEntryMode() {
+    return entryMode;
   }
 
-  public String getStatus() {
-    return status;
+  public Integer getInstallmentNumber() {
+    return installmentNumber;
   }
 
-  public String getType() {
-    return type;
+  public String getName() {
+    return name;
   }
 
-  public Integer getCategoryId() {
-    return categoryId;
+  public String getOriginalValueCurrency() {
+    return originalValueCurrency;
   }
 
-  public String getProviderId() {
-    return providerId;
+  public long getOriginalValueSubcents() {
+    return originalValueSubcents;
   }
 
-  public String getIntegrationId() {
-    return integrationId;
+  public String getTempValueCurrency() {
+    return tempValueCurrency;
+  }
+
+  public long getTempValueSubcents() {
+    return tempValueSubcents;
+  }
+
+  public LocalDate getTransactionDate() {
+    return transactionDate;
+  }
+
+  public String getTransactionType() {
+    return transactionType;
+  }
+
+  public String getValueCurrency() {
+    return valueCurrency;
+  }
+
+  public long getValueSubcents() {
+    return valueSubcents;
   }
 
   public LocalDateTime getCreatedAt() {
     return createdAt;
   }
 
-  public AccountItemDTO getAccountItem() {
-    return accountItem;
+  public LocalDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public Long getCashFlowId() {
+    return cashFlowId;
+  }
+
+  public Long getClientConceptsCashFlowCategoryId() {
+    return clientConceptsCashFlowCategoryId;
+  }
+
+  public Long getClientConceptsCashFlowPurchaseId() {
+    return clientConceptsCashFlowPurchaseId;
+  }
+
+  public Long getClientConceptsCashFlowSubcategoryId() {
+    return clientConceptsCashFlowSubcategoryId;
+  }
+
+  public String getIntegrationId() {
+    return integrationId;
   }
 }

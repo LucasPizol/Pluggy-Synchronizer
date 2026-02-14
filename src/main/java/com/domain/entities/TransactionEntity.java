@@ -1,17 +1,18 @@
 package com.domain.entities;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.ConstraintMode;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.ForeignKey;
 
@@ -20,102 +21,141 @@ import jakarta.persistence.ForeignKey;
 public class TransactionEntity {
 
   @Id
-  @Column(length = 36)
-  private String id;
-
-  @PrePersist
-  public void prePersist() {
-    if (this.id == null) {
-      this.id = UUID.randomUUID().toString();
-    }
-  }
-
-  @ManyToOne
-  @JoinColumn(name = "account_item_id", nullable = false, foreignKey = @ForeignKey(name = "fk_transaction_account_item", value = ConstraintMode.CONSTRAINT))
-  @JsonIgnore
-  private AccountItemEntity accountItem;
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
   @Column(nullable = false)
-  private String description;
+  private boolean blocked = false;
+
+  @Column(name = "deleted_at")
+  private LocalDateTime deletedAt;
+
+  @Column(name = "deleted_by")
+  private String deletedBy;
+
+  private String details;
+
+  @Column(name = "entry_mode", nullable = false)
+  private String entryMode;
+
+  @Column(name = "installment_number")
+  private Integer installmentNumber;
 
   @Column(nullable = false)
-  private double amount;
+  private String name;
 
-  @Column(nullable = false)
-  private LocalDateTime date;
+  @Column(name = "original_value_currency", nullable = false)
+  private String originalValueCurrency = "br";
 
-  @Column(nullable = false, length = 20)
-  private String status;
+  @Column(name = "original_value_subcents", nullable = false)
+  private long originalValueSubcents = 0L;
 
-  @Column(nullable = false, length = 20)
-  private String type;
+  @Column(name = "temp_value_currency", nullable = false)
+  private String tempValueCurrency = "br";
 
-  @Column(name = "category_id", nullable = false)
-  private Integer categoryId;
+  @Column(name = "temp_value_subcents", nullable = false)
+  private long tempValueSubcents = 0L;
 
-  @Column(name = "provider_id", length = 50)
-  private String providerId;
+  @Column(name = "transaction_date")
+  private LocalDate transactionDate;
+
+  @Column(name = "transaction_type")
+  private String transactionType;
+
+  @Column(name = "value_currency", nullable = false)
+  private String valueCurrency = "br";
+
+  @Column(name = "value_subcents", nullable = false)
+  private long valueSubcents = 0L;
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
 
-  @Column(name = "updated_at")
+  @Column(name = "updated_at", nullable = false)
   private LocalDateTime updatedAt;
 
-  @Column(name = "integration_id", length = 50)
+  @ManyToOne
+  @JoinColumn(name = "client_concepts_cash_flows_id", foreignKey = @ForeignKey(value = ConstraintMode.CONSTRAINT))
+  @JsonIgnore
+  private CashFlowEntity cashFlow;
+
+  @Column(name = "client_concepts_cash_flow_category_id")
+  private Long clientConceptsCashFlowCategoryId;
+
+  @Column(name = "client_concepts_cash_flow_purchase_id")
+  private Long clientConceptsCashFlowPurchaseId;
+
+  @Column(name = "client_concepts_cash_flow_subcategory_id")
+  private Long clientConceptsCashFlowSubcategoryId;
+
+  @Column(name = "integration_id")
   private String integrationId;
 
   public TransactionEntity() {
   }
 
-  public TransactionEntity(AccountItemEntity accountItem, String description, double amount,
-      LocalDateTime date, String status, String type, Integer categoryId, String providerId, String integrationId) {
-    this.accountItem = accountItem;
-    this.description = description;
-    this.amount = amount;
-    this.date = date;
-    this.status = status;
-    this.type = type;
-    this.categoryId = categoryId;
-    this.providerId = providerId;
-    this.integrationId = integrationId;
-    this.createdAt = LocalDateTime.now();
-  }
-
-  public String getId() {
+  public Long getId() {
     return id;
   }
 
-  public AccountItemEntity getAccountItem() {
-    return accountItem;
+  public boolean isBlocked() {
+    return blocked;
   }
 
-  public String getDescription() {
-    return description;
+  public LocalDateTime getDeletedAt() {
+    return deletedAt;
   }
 
-  public double getAmount() {
-    return amount;
+  public String getDeletedBy() {
+    return deletedBy;
   }
 
-  public LocalDateTime getDate() {
-    return date;
+  public String getDetails() {
+    return details;
   }
 
-  public String getStatus() {
-    return status;
+  public String getEntryMode() {
+    return entryMode;
   }
 
-  public String getType() {
-    return type;
+  public Integer getInstallmentNumber() {
+    return installmentNumber;
   }
 
-  public Integer getCategoryId() {
-    return categoryId;
+  public String getName() {
+    return name;
   }
 
-  public String getProviderId() {
-    return providerId;
+  public String getOriginalValueCurrency() {
+    return originalValueCurrency;
+  }
+
+  public long getOriginalValueSubcents() {
+    return originalValueSubcents;
+  }
+
+  public String getTempValueCurrency() {
+    return tempValueCurrency;
+  }
+
+  public long getTempValueSubcents() {
+    return tempValueSubcents;
+  }
+
+  public LocalDate getTransactionDate() {
+    return transactionDate;
+  }
+
+  public String getTransactionType() {
+    return transactionType;
+  }
+
+  public String getValueCurrency() {
+    return valueCurrency;
+  }
+
+  public long getValueSubcents() {
+    return valueSubcents;
   }
 
   public LocalDateTime getCreatedAt() {
@@ -126,44 +166,88 @@ public class TransactionEntity {
     return updatedAt;
   }
 
+  public CashFlowEntity getCashFlow() {
+    return cashFlow;
+  }
+
+  public Long getClientConceptsCashFlowCategoryId() {
+    return clientConceptsCashFlowCategoryId;
+  }
+
+  public Long getClientConceptsCashFlowPurchaseId() {
+    return clientConceptsCashFlowPurchaseId;
+  }
+
+  public Long getClientConceptsCashFlowSubcategoryId() {
+    return clientConceptsCashFlowSubcategoryId;
+  }
+
   public String getIntegrationId() {
     return integrationId;
   }
 
-  public void setId(String id) {
+  public void setId(Long id) {
     this.id = id;
   }
 
-  public void setAccountItem(AccountItemEntity accountItem) {
-    this.accountItem = accountItem;
+  public void setBlocked(boolean blocked) {
+    this.blocked = blocked;
   }
 
-  public void setDescription(String description) {
-    this.description = description;
+  public void setDeletedAt(LocalDateTime deletedAt) {
+    this.deletedAt = deletedAt;
   }
 
-  public void setAmount(double amount) {
-    this.amount = amount;
+  public void setDeletedBy(String deletedBy) {
+    this.deletedBy = deletedBy;
   }
 
-  public void setDate(LocalDateTime date) {
-    this.date = date;
+  public void setDetails(String details) {
+    this.details = details;
   }
 
-  public void setStatus(String status) {
-    this.status = status;
+  public void setEntryMode(String entryMode) {
+    this.entryMode = entryMode;
   }
 
-  public void setType(String type) {
-    this.type = type;
+  public void setInstallmentNumber(Integer installmentNumber) {
+    this.installmentNumber = installmentNumber;
   }
 
-  public void setCategoryId(Integer categoryId) {
-    this.categoryId = categoryId;
+  public void setName(String name) {
+    this.name = name;
   }
 
-  public void setProviderId(String providerId) {
-    this.providerId = providerId;
+  public void setOriginalValueCurrency(String originalValueCurrency) {
+    this.originalValueCurrency = originalValueCurrency;
+  }
+
+  public void setOriginalValueSubcents(long originalValueSubcents) {
+    this.originalValueSubcents = originalValueSubcents;
+  }
+
+  public void setTempValueCurrency(String tempValueCurrency) {
+    this.tempValueCurrency = tempValueCurrency;
+  }
+
+  public void setTempValueSubcents(long tempValueSubcents) {
+    this.tempValueSubcents = tempValueSubcents;
+  }
+
+  public void setTransactionDate(LocalDate transactionDate) {
+    this.transactionDate = transactionDate;
+  }
+
+  public void setTransactionType(String transactionType) {
+    this.transactionType = transactionType;
+  }
+
+  public void setValueCurrency(String valueCurrency) {
+    this.valueCurrency = valueCurrency;
+  }
+
+  public void setValueSubcents(long valueSubcents) {
+    this.valueSubcents = valueSubcents;
   }
 
   public void setCreatedAt(LocalDateTime createdAt) {
@@ -172,6 +256,22 @@ public class TransactionEntity {
 
   public void setUpdatedAt(LocalDateTime updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public void setCashFlow(CashFlowEntity cashFlow) {
+    this.cashFlow = cashFlow;
+  }
+
+  public void setClientConceptsCashFlowCategoryId(Long clientConceptsCashFlowCategoryId) {
+    this.clientConceptsCashFlowCategoryId = clientConceptsCashFlowCategoryId;
+  }
+
+  public void setClientConceptsCashFlowPurchaseId(Long clientConceptsCashFlowPurchaseId) {
+    this.clientConceptsCashFlowPurchaseId = clientConceptsCashFlowPurchaseId;
+  }
+
+  public void setClientConceptsCashFlowSubcategoryId(Long clientConceptsCashFlowSubcategoryId) {
+    this.clientConceptsCashFlowSubcategoryId = clientConceptsCashFlowSubcategoryId;
   }
 
   public void setIntegrationId(String integrationId) {

@@ -1,30 +1,40 @@
 package com.infrastructure.persistence.repositories;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-import com.domain.entities.AccountItemEntity;
+import com.domain.entities.CashFlowEntity;
 import com.domain.entities.TransactionEntity;
 
 /**
- * Fixtures para TransactionRepositoryTest. Métodos que retornam entidades Panache
- * ficam fora da classe de teste para não interferir no bytecode enhancement do Quarkus.
+ * Fixtures para TransactionRepositoryTest.
  */
 public final class TransactionRepositoryTestFixtures {
 
   private TransactionRepositoryTestFixtures() {
   }
 
-  public static TransactionEntity createTransaction(AccountItemEntity accountItem, String integrationId, double amount) {
-    return new TransactionEntity(
-        accountItem, "Test transaction", amount,
-        LocalDateTime.now(), "POSTED", "CREDIT", 1, null, integrationId);
+  public static TransactionEntity createTransaction(CashFlowEntity cashFlow, String integrationId, double amount) {
+    long subcents = Math.round(amount * 100);
+    LocalDateTime now = LocalDateTime.now();
+    TransactionEntity tx = new TransactionEntity();
+    tx.setCashFlow(cashFlow);
+    tx.setName("Test transaction");
+    tx.setEntryMode("CREDIT");
+    tx.setOriginalValueSubcents(subcents);
+    tx.setTempValueSubcents(subcents);
+    tx.setValueSubcents(subcents);
+    tx.setTransactionDate(LocalDate.now());
+    tx.setTransactionType("CREDIT");
+    tx.setIntegrationId(integrationId);
+    tx.setCreatedAt(now);
+    tx.setUpdatedAt(now);
+    return tx;
   }
 
-  public static TransactionEntity createTransaction(AccountItemEntity accountItem, String id, String integrationId,
+  public static TransactionEntity createTransaction(CashFlowEntity cashFlow, Long id, String integrationId,
       double amount) {
-    TransactionEntity tx = new TransactionEntity(
-        accountItem, "Test transaction", amount,
-        LocalDateTime.now(), "POSTED", "CREDIT", 1, null, integrationId);
+    TransactionEntity tx = createTransaction(cashFlow, integrationId, amount);
     tx.setId(id);
     return tx;
   }

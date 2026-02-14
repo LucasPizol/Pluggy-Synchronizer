@@ -13,7 +13,7 @@ public class GetAccountUseCase implements IGetAccountUseCase {
   private IAccountRepository accountRepository;
 
   @Override
-  public AccountEntity getAccount(String accountId) {
-    return accountRepository.findById(accountId);
+  public AccountEntity getAccountByConnectionId(String connectionId) {
+    return accountRepository.findByConnectionId(connectionId);
   }
 }

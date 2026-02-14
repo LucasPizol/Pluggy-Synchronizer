@@ -5,5 +5,5 @@ import java.util.List;
 import com.domain.entities.AccountItemEntity;
 
 public interface IListAccountItemUseCase {
-  List<AccountItemEntity> listAccountItems(String accountId);
+  List<AccountItemEntity> listAccountItems(Long accountId);
 }

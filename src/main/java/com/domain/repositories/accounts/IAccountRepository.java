@@ -6,5 +6,9 @@ public interface IAccountRepository {
 
   void persist(AccountEntity entity);
 
-  AccountEntity findById(String id);
+  AccountEntity findById(Long id);
+
+  AccountEntity findByConnectionId(String connectionId);
+
+  void update(AccountEntity entity);
 }

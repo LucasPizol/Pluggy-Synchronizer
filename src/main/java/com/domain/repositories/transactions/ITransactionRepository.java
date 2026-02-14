@@ -8,13 +8,13 @@ public interface ITransactionRepository {
 
   void persist(TransactionEntity entity);
 
-  TransactionEntity findById(String id);
+  TransactionEntity findById(Long id);
 
-  boolean existsById(String id);
+  boolean existsById(Long id);
 
-  long countByAccountItemId(String accountItemId);
+  long countByCashFlowId(Long cashFlowId);
 
-  List<TransactionEntity> findByAccountItemId(String accountItemId, Integer page, Integer pageSize);
+  List<TransactionEntity> findByCashFlowId(Long cashFlowId, Integer page, Integer pageSize);
 
   List<TransactionEntity> findAllByIntegrationIds(List<String> integrationIds);
 

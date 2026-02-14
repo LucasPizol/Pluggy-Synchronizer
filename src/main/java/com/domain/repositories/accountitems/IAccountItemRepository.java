@@ -8,9 +8,11 @@ public interface IAccountItemRepository {
 
   void persist(AccountItemEntity entity);
 
-  AccountItemEntity findByIntegrationId(String integrationId);
+  void update(AccountItemEntity entity);
 
-  List<AccountItemEntity> findByAccountId(String accountId);
+  AccountItemEntity findByItemId(String itemId);
 
-  AccountItemEntity findById(String id);
+  AccountItemEntity findById(Long id);
+
+  List<AccountItemEntity> findByAccountId(Long accountId);
 }

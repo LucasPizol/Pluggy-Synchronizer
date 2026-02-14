@@ -11,8 +11,10 @@ import com.domain.usecase.accountitem.IListAccountItemUseCase;
 import com.domain.usecase.accountitem.IUpdateAccountItemUseCase;
 import com.domain.usecase.openfinance.IAccountItemSynchronizerUseCase;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+@ApplicationScoped
 public class AccountItemSynchronizerUseCase implements IAccountItemSynchronizerUseCase {
 
   @Inject
@@ -29,12 +31,12 @@ public class AccountItemSynchronizerUseCase implements IAccountItemSynchronizerU
 
   @Override
   public void synchronizeAccountItems(AccountEntity account) {
-    OpenFinanceAccountItem[] openFinanceAccountItems = openFinance.listAccountItems(account.getAccountId());
+    OpenFinanceAccountItem[] openFinanceAccountItems = openFinance.listAccountItems(account.getConnectionId());
     List<AccountItemEntity> accountItems = listAccountItemUseCase.listAccountItems(account.getId());
 
     for (OpenFinanceAccountItem openFinanceAccountItem : openFinanceAccountItems) {
       AccountItemEntity accountItem = accountItems.stream()
-          .filter(item -> item.getIntegrationId().equals(openFinanceAccountItem.getId()))
+          .filter(item -> openFinanceAccountItem.getId().equals(item.getItemId()))
           .findFirst()
           .orElse(null);
 

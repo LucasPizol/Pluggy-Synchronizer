@@ -4,9 +4,9 @@ import com.application.dto.TransactionDTO;
 import com.domain.shared.PaginatedResponse;
 
 public interface ITransactionListUseCase {
-  PaginatedResponse<TransactionDTO> listTransactions(String accountItemId);
+  PaginatedResponse<TransactionDTO> listTransactions(Long cashFlowId);
 
-  PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page);
+  PaginatedResponse<TransactionDTO> listTransactions(Long cashFlowId, Integer page);
 
-  PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page, Integer pageSize);
+  PaginatedResponse<TransactionDTO> listTransactions(Long cashFlowId, Integer page, Integer pageSize);
 }

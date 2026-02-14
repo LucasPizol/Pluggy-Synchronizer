@@ -14,10 +14,11 @@ public class UpdateAccountItemUseCase implements IUpdateAccountItemUseCase {
   private IAccountItemRepository accountItemRepository;
 
   @Override
-  public AccountItemEntity updateAccountItem(String accountItemId, String name) {
+  public AccountItemEntity updateAccountItem(Long accountItemId, String name) {
     AccountItemEntity accountItem = accountItemRepository.findById(accountItemId);
     accountItem.setName(name);
-    accountItemRepository.persist(accountItem);
+    accountItem.setUpdatedAt(java.time.LocalDateTime.now());
+    accountItemRepository.update(accountItem);
     return accountItem;
   }
 }
