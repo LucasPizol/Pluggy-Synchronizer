@@ -13,12 +13,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import com.domain.entities.AccountEntity;
+import com.domain.entities.AccountItemEntity;
+import com.domain.entities.TransactionEntity;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
+import com.domain.repositories.transactions.ITransactionRepository;
 import com.domain.shared.PaginatedResponse;
-import com.infrastructure.persistence.entities.AccountEntity;
-import com.infrastructure.persistence.entities.TransactionEntity;
-import com.infrastructure.persistence.repositories.TransactionRepository;
+import com.domain.usecase.accountconnection.ICreateAccountUseCase;
+import com.domain.usecase.accountconnection.IGetAccountUseCase;
+import com.domain.usecase.accountitem.IListAccountItemUseCase;
 
 class TransactionsSynchronizerUseCaseTest {
 
@@ -26,7 +30,16 @@ class TransactionsSynchronizerUseCaseTest {
   private IOpenFinance openFinance;
 
   @Mock
-  private TransactionRepository transactionRepository;
+  private ITransactionRepository transactionRepository;
+
+  @Mock
+  private IListAccountItemUseCase listAccountItemUseCase;
+
+  @Mock
+  private ICreateAccountUseCase createAccountUseCase;
+
+  @Mock
+  private IGetAccountUseCase getAccountUseCase;
 
   @InjectMocks
   private TransactionsSynchronizerUseCase useCase;
@@ -39,14 +52,19 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldPersistNewTransactions() {
     String accountId = "account-123";
-    OpenFinanceTransaction transaction = new OpenFinanceTransaction(
-        "tx-1", accountId, "Test transaction", 100.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
 
+    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
+    when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of(accountItem));
+
+    OpenFinanceTransaction transaction = new OpenFinanceTransaction(
+        "tx-1", accountItem.getIntegrationId(), "Test transaction", 100.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
     PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
         1, 10, 1L, 1, new OpenFinanceTransaction[] { transaction });
 
-    when(openFinance.listTransactions(accountId, null, null)).thenReturn(response);
+    when(openFinance.listTransactions(accountItem.getIntegrationId(), null, null)).thenReturn(response);
     when(transactionRepository.findAllByIntegrationIds(anyList())).thenReturn(List.of());
 
     useCase.synchronizeTransactions(accountId);
@@ -59,21 +77,23 @@ class TransactionsSynchronizerUseCaseTest {
   void shouldUpdateExistingTransactions() {
     String accountId = "account-123";
     String transactionId = "tx-1";
-    OpenFinanceTransaction transaction = new OpenFinanceTransaction(
-        transactionId, accountId, "Test transaction", 150.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
+    TransactionEntity existingEntity = new TransactionEntity(
+        accountItem, "Test transaction", 100.0,
+        LocalDateTime.now(), "PENDING", "CREDIT", 1, null, transactionId);
+    existingEntity.setId(transactionId);
 
+    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
+    when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of(accountItem));
+
+    OpenFinanceTransaction transaction = new OpenFinanceTransaction(
+        transactionId, accountItem.getIntegrationId(), "Test transaction", 150.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
     PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
         1, 10, 1L, 1, new OpenFinanceTransaction[] { transaction });
 
-    AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
-        "account-123");
-    TransactionEntity existingEntity = new TransactionEntity(
-        account,
-        "Test transaction", 100.0,
-        LocalDateTime.now(), "PENDING", "CREDIT", 1, null, transactionId);
-
-    when(openFinance.listTransactions(accountId, null, null)).thenReturn(response);
+    when(openFinance.listTransactions(accountItem.getIntegrationId(), null, null)).thenReturn(response);
     when(transactionRepository.findAllByIntegrationIds(anyList())).thenReturn(List.of(existingEntity));
 
     useCase.synchronizeTransactions(accountId);
@@ -85,10 +105,9 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldHandleEmptyResponse() {
     String accountId = "account-123";
-    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
-        1, 10, 0L, 0, new OpenFinanceTransaction[] {});
-
-    when(openFinance.listTransactions(accountId, null, null)).thenReturn(response);
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
+    when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of());
 
     useCase.synchronizeTransactions(accountId);
 
@@ -99,23 +118,26 @@ class TransactionsSynchronizerUseCaseTest {
   @Test
   void shouldPersistOnlyNewTransactionsWhenMixed() {
     String accountId = "account-123";
-    OpenFinanceTransaction newTransaction = new OpenFinanceTransaction(
-        "tx-new", accountId, "New transaction", 200.0,
-        LocalDateTime.now(), "POSTED", "DEBIT", "Test", null);
-    OpenFinanceTransaction existingTransaction = new OpenFinanceTransaction(
-        "tx-existing", accountId, "Existing transaction", 100.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
-
-    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
-        1, 10, 2L, 1, new OpenFinanceTransaction[] { newTransaction, existingTransaction });
-
-    AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
-        "account-123");
+    AccountEntity account = new AccountEntity(accountId, "Test", "#000000", "https://example.com/logo.png", 1, accountId);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "item-int-1", "Conta Corrente");
     TransactionEntity existingEntity = new TransactionEntity(
-        account, "Existing transaction", 100.0,
+        accountItem, "Existing transaction", 100.0,
         LocalDateTime.now(), "PENDING", "CREDIT", 1, null, "tx-existing");
+    existingEntity.setId("tx-existing");
 
-    when(openFinance.listTransactions(accountId, null, null)).thenReturn(response);
+    when(getAccountUseCase.getAccount(accountId)).thenReturn(account);
+    when(listAccountItemUseCase.listAccountItems(account.getId())).thenReturn(List.of(accountItem));
+
+    OpenFinanceTransaction newTx = new OpenFinanceTransaction(
+        "tx-new", accountItem.getIntegrationId(), "New transaction", 200.0,
+        LocalDateTime.now(), "POSTED", "DEBIT", "Test", null);
+    OpenFinanceTransaction existingTx = new OpenFinanceTransaction(
+        "tx-existing", accountItem.getIntegrationId(), "Existing transaction", 100.0,
+        LocalDateTime.now(), "POSTED", "CREDIT", "Test", null);
+    PaginatedResponse<OpenFinanceTransaction> response = new PaginatedResponse<>(
+        1, 10, 2L, 1, new OpenFinanceTransaction[] { newTx, existingTx });
+
+    when(openFinance.listTransactions(accountItem.getIntegrationId(), null, null)).thenReturn(response);
     when(transactionRepository.findAllByIntegrationIds(anyList())).thenReturn(List.of(existingEntity));
 
     useCase.synchronizeTransactions(accountId);

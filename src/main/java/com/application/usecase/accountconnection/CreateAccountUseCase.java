@@ -4,10 +4,10 @@ import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceAccount;
 import com.domain.gateway.openfinance.models.OpenFinanceAccountItem;
 import com.domain.usecase.accountconnection.ICreateAccountUseCase;
-import com.infrastructure.persistence.entities.AccountEntity;
-import com.infrastructure.persistence.entities.AccountItemEntity;
-import com.infrastructure.persistence.repositories.AccountItemRepository;
-import com.infrastructure.persistence.repositories.AccountRepository;
+import com.domain.entities.AccountEntity;
+import com.domain.entities.AccountItemEntity;
+import com.domain.repositories.accountitems.IAccountItemRepository;
+import com.domain.repositories.accounts.IAccountRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -15,13 +15,13 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class CreateAccountUseCase implements ICreateAccountUseCase {
   @Inject
-  private AccountRepository accountRepository;
+  private IAccountRepository accountRepository;
 
   @Inject
   private IOpenFinance openFinance;
 
   @Inject
-  private AccountItemRepository accountItemRepository;
+  private IAccountItemRepository accountItemRepository;
 
   @Override
   public AccountEntity createAccount(String accountId) {

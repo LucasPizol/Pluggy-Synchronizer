@@ -1,6 +1,6 @@
 package com.application.dto;
 
-import com.infrastructure.persistence.entities.AccountEntity;
+import com.domain.entities.AccountEntity;
 
 public class AccountDTO {
   private String id;

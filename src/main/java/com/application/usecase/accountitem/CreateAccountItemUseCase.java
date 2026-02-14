@@ -1,9 +1,9 @@
 package com.application.usecase.accountitem;
 
 import com.domain.usecase.accountitem.ICreateAccountItemUseCase;
-import com.infrastructure.persistence.entities.AccountItemEntity;
-import com.infrastructure.persistence.repositories.AccountItemRepository;
-import com.infrastructure.persistence.entities.AccountEntity;
+import com.domain.entities.AccountItemEntity;
+import com.domain.entities.AccountEntity;
+import com.domain.repositories.accountitems.IAccountItemRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class CreateAccountItemUseCase implements ICreateAccountItemUseCase {
   @Inject
-  private AccountItemRepository accountItemRepository;
+  private IAccountItemRepository accountItemRepository;
 
   @Override
   public AccountItemEntity createAccountItem(AccountEntity account, String integrationId, String name) {

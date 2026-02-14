@@ -1,4 +1,4 @@
-package com.infrastructure.persistence.entities;
+package com.domain.entities;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

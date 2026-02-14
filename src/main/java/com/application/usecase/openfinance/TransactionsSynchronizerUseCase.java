@@ -13,10 +13,10 @@ import com.domain.usecase.accountconnection.ICreateAccountUseCase;
 import com.domain.usecase.accountconnection.IGetAccountUseCase;
 import com.domain.usecase.accountitem.IListAccountItemUseCase;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
-import com.infrastructure.persistence.entities.AccountEntity;
-import com.infrastructure.persistence.entities.AccountItemEntity;
-import com.infrastructure.persistence.entities.TransactionEntity;
-import com.infrastructure.persistence.repositories.TransactionRepository;
+import com.domain.entities.AccountEntity;
+import com.domain.entities.AccountItemEntity;
+import com.domain.entities.TransactionEntity;
+import com.domain.repositories.transactions.ITransactionRepository;
 
 import org.jboss.logging.Logger;
 
@@ -31,7 +31,7 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   private IOpenFinance openFinance;
 
   @Inject
-  private TransactionRepository transactionRepository;
+  private ITransactionRepository transactionRepository;
 
   @Inject
   private IListAccountItemUseCase listAccountItemUseCase;

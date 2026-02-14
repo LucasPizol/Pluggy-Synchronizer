@@ -3,7 +3,7 @@ package com.application.usecase.transactions;
 import com.application.dto.TransactionDTO;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.transactions.ITransactionListUseCase;
-import com.infrastructure.persistence.repositories.TransactionRepository;
+import com.domain.repositories.transactions.ITransactionRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class TransactionsListUseCase implements ITransactionListUseCase {
   @Inject
-  private TransactionRepository transactionRepository;
+  private ITransactionRepository transactionRepository;
 
   @Override
   public PaginatedResponse<TransactionDTO> listTransactions(String accountItemId) {
@@ -26,7 +26,7 @@ public class TransactionsListUseCase implements ITransactionListUseCase {
   @Override
   public PaginatedResponse<TransactionDTO> listTransactions(String accountItemId, Integer page, Integer pageSize) {
     var entities = transactionRepository.findByAccountItemId(accountItemId, page, pageSize);
-    long total = transactionRepository.count();
+    long total = transactionRepository.countByAccountItemId(accountItemId);
     int totalPages = (int) Math.ceil((double) total / pageSize);
 
     TransactionDTO[] dtos = entities.stream()

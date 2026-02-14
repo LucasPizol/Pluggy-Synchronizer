@@ -2,7 +2,7 @@ package com.application.dto;
 
 import java.time.LocalDateTime;
 
-import com.infrastructure.persistence.entities.TransactionEntity;
+import com.domain.entities.TransactionEntity;
 
 public class TransactionDTO {
   private String id;

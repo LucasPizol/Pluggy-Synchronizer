@@ -5,13 +5,10 @@ import io.quarkus.test.InjectMock;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
+import com.application.dto.TransactionDTO;
+import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
 import com.domain.usecase.transactions.ITransactionListUseCase;
-import com.domain.shared.PaginatedResponse;
-import com.infrastructure.persistence.entities.AccountEntity;
-import com.infrastructure.persistence.entities.TransactionEntity;
-
-import java.time.LocalDateTime;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -83,15 +80,8 @@ class TransactionsSynchronizerResourceTest {
 
   @Test
   void shouldListTransactionsSuccessfully() {
-    AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
-        "account-123");
-    TransactionEntity entity = new TransactionEntity(
-        account,
-        "Test", 100.0,
-        LocalDateTime.now(), "POSTED", "CREDIT", 1, null, "tx-1");
-
-    PaginatedResponse<TransactionEntity> response = new PaginatedResponse<>(
-        1, 10, 1L, 1, new TransactionEntity[] { entity });
+    PaginatedResponse<TransactionDTO> response = new PaginatedResponse<>(
+        1, 10, 1L, 1, new TransactionDTO[] { new TransactionDTO() });
 
     when(transactionList.listTransactions(anyString(), anyInt(), anyInt()))
         .thenReturn(response);

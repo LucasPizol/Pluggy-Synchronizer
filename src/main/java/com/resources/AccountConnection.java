@@ -1,7 +1,7 @@
 package com.resources;
 
 import com.domain.usecase.accountconnection.IGetAccountUseCase;
-import com.infrastructure.persistence.entities.AccountEntity;
+import com.domain.entities.AccountEntity;
 import com.resources.TransactionsSynchronizer.ErrorResponse;
 
 import jakarta.inject.Inject;

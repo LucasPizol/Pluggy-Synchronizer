@@ -1,8 +1,8 @@
 package com.application.usecase.accountconnection;
 
 import com.domain.usecase.accountconnection.IGetAccountUseCase;
-import com.infrastructure.persistence.entities.AccountEntity;
-import com.infrastructure.persistence.repositories.AccountRepository;
+import com.domain.entities.AccountEntity;
+import com.domain.repositories.accounts.IAccountRepository;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -10,7 +10,7 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class GetAccountUseCase implements IGetAccountUseCase {
   @Inject
-  private AccountRepository accountRepository;
+  private IAccountRepository accountRepository;
 
   @Override
   public AccountEntity getAccount(String accountId) {

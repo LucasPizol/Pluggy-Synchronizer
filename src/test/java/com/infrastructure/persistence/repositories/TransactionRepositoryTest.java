@@ -2,14 +2,14 @@ package com.infrastructure.persistence.repositories;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.infrastructure.persistence.entities.AccountEntity;
-import com.infrastructure.persistence.entities.TransactionEntity;
+import com.domain.entities.AccountEntity;
+import com.domain.entities.AccountItemEntity;
+import com.domain.entities.TransactionEntity;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
@@ -21,10 +21,18 @@ class TransactionRepositoryTest {
   @Inject
   TransactionRepository repository;
 
+  @Inject
+  AccountRepository accountRepository;
+
+  @Inject
+  AccountItemRepository accountItemRepository;
+
   @BeforeEach
   @Transactional
   void setUp() {
     repository.deleteAll();
+    accountItemRepository.deleteAll();
+    accountRepository.deleteAll();
   }
 
   @Test
@@ -32,44 +40,53 @@ class TransactionRepositoryTest {
   void shouldPersistAndFindTransaction() {
     AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
         "account-123");
-    TransactionEntity entity = createTransaction("tx-1", account, 100.0);
+    accountRepository.persist(account);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "int-1", "Conta Corrente");
+    accountItemRepository.persist(accountItem);
 
+    TransactionEntity entity = TransactionRepositoryTestFixtures.createTransaction(accountItem, "tx-1", "int-tx-1", 100.0);
     repository.persist(entity);
-    TransactionEntity found = repository.findById("tx-1");
+    TransactionEntity found = repository.findById(entity.getId());
 
     assertNotNull(found);
-    assertEquals("tx-1", found.getId());
-    assertEquals("account-123", found.getAccount().getId());
+    assertEquals(accountItem.getId(), found.getAccountItem().getId());
     assertEquals(100.0, found.getAmount());
   }
 
   @Test
   @Transactional
-  void shouldFindByAccountId() {
+  void shouldFindByAccountItemId() {
     AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
         "account-123");
-    repository.persist(createTransaction("tx-1", account, 100.0));
-    repository.persist(createTransaction("tx-2", account, 200.0));
-    repository.persist(createTransaction("tx-3", account, 300.0));
+    accountRepository.persist(account);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "int-1", "Conta Corrente");
+    accountItemRepository.persist(accountItem);
 
-    List<TransactionEntity> result = repository.findByAccountId("account-123");
+    repository.persist(TransactionRepositoryTestFixtures.createTransaction(accountItem, "id-1", "int-tx-1", 100.0));
+    repository.persist(TransactionRepositoryTestFixtures.createTransaction(accountItem, "id-2", "int-tx-2", 200.0));
+
+    List<TransactionEntity> result = repository.findByAccountItemId(accountItem.getId(), 1, 10);
 
     assertEquals(2, result.size());
-    assertTrue(result.stream().allMatch(t -> t.getAccount().getId().equals("account-123")));
+    assertTrue(result.stream().allMatch(t -> t.getAccountItem().getId().equals(accountItem.getId())));
   }
 
   @Test
   @Transactional
-  void shouldFindByAccountIdWithPagination() {
+  void shouldFindByAccountItemIdWithPagination() {
+    AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
+        "account-123");
+    accountRepository.persist(account);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "int-1", "Conta Corrente");
+    accountItemRepository.persist(accountItem);
+
     for (int i = 0; i < 25; i++) {
-      AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
-          "account-123");
-      repository.persist(createTransaction("tx-" + i, account, 100.0 + i));
+      repository.persist(TransactionRepositoryTestFixtures.createTransaction(accountItem, "id-" + i, "int-tx-" + i, 100.0 + i));
     }
 
-    List<TransactionEntity> page1 = repository.findByAccountId("account-123", 1, 10);
-    List<TransactionEntity> page2 = repository.findByAccountId("account-123", 2, 10);
-    List<TransactionEntity> page3 = repository.findByAccountId("account-123", 3, 10);
+    List<TransactionEntity> page1 = repository.findByAccountItemId(accountItem.getId(), 1, 10);
+    List<TransactionEntity> page2 = repository.findByAccountItemId(accountItem.getId(), 2, 10);
+    List<TransactionEntity> page3 = repository.findByAccountItemId(accountItem.getId(), 3, 10);
 
     assertEquals(10, page1.size());
     assertEquals(10, page2.size());
@@ -78,18 +95,22 @@ class TransactionRepositoryTest {
 
   @Test
   @Transactional
-  void shouldFindAllByIds() {
+  void shouldFindAllByIntegrationIds() {
     AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
         "account-123");
-    repository.persist(createTransaction("tx-1", account, 100.0));
-    repository.persist(createTransaction("tx-2", account, 200.0));
-    repository.persist(createTransaction("tx-3", account, 300.0));
+    accountRepository.persist(account);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "int-1", "Conta Corrente");
+    accountItemRepository.persist(accountItem);
 
-    List<TransactionEntity> result = repository.findAllByIntegrationIds(List.of("tx-1", "tx-3"));
+    repository.persist(TransactionRepositoryTestFixtures.createTransaction(accountItem, "id-1", "int-tx-1", 100.0));
+    repository.persist(TransactionRepositoryTestFixtures.createTransaction(accountItem, "id-2", "int-tx-2", 200.0));
+    repository.persist(TransactionRepositoryTestFixtures.createTransaction(accountItem, "id-3", "int-tx-3", 300.0));
+
+    List<TransactionEntity> result = repository.findAllByIntegrationIds(List.of("int-tx-1", "int-tx-3"));
 
     assertEquals(2, result.size());
-    assertTrue(result.stream().anyMatch(t -> t.getId().equals("tx-1")));
-    assertTrue(result.stream().anyMatch(t -> t.getId().equals("tx-3")));
+    assertTrue(result.stream().anyMatch(t -> "int-tx-1".equals(t.getIntegrationId())));
+    assertTrue(result.stream().anyMatch(t -> "int-tx-3".equals(t.getIntegrationId())));
   }
 
   @Test
@@ -113,10 +134,14 @@ class TransactionRepositoryTest {
   void shouldCheckExistsById() {
     AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
         "account-123");
-    repository.persist(createTransaction("tx-1", account, 100.0));
+    accountRepository.persist(account);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "int-1", "Conta Corrente");
+    accountItemRepository.persist(accountItem);
+    TransactionEntity tx = TransactionRepositoryTestFixtures.createTransaction(accountItem, "tx-1", "int-tx-1", 100.0);
+    repository.persist(tx);
 
-    assertTrue(repository.existsById("tx-1"));
-    assertFalse(repository.existsById("tx-nonexistent"));
+    assertTrue(repository.existsById(tx.getId()));
+    assertFalse(repository.existsById("nonexistent"));
   }
 
   @Test
@@ -124,12 +149,15 @@ class TransactionRepositoryTest {
   void shouldFindByCategoryId() {
     AccountEntity account = new AccountEntity("account-123", "Test", "#000000", "https://example.com/logo.png", 1,
         "account-123");
+    accountRepository.persist(account);
+    AccountItemEntity accountItem = new AccountItemEntity(account, "int-1", "Conta Corrente");
+    accountItemRepository.persist(accountItem);
 
-    TransactionEntity entity1 = createTransaction("tx-1", account, 100.0);
+    TransactionEntity entity1 = TransactionRepositoryTestFixtures.createTransaction(accountItem, "tx-1", "int-1", 100.0);
     entity1.setCategoryId(1);
-    TransactionEntity entity2 = createTransaction("tx-2", account, 200.0);
+    TransactionEntity entity2 = TransactionRepositoryTestFixtures.createTransaction(accountItem, "tx-2", "int-2", 200.0);
     entity2.setCategoryId(2);
-    TransactionEntity entity3 = createTransaction("tx-3", account, 300.0);
+    TransactionEntity entity3 = TransactionRepositoryTestFixtures.createTransaction(accountItem, "tx-3", "int-3", 300.0);
     entity3.setCategoryId(1);
 
     repository.persist(entity1);
@@ -142,9 +170,4 @@ class TransactionRepositoryTest {
     assertTrue(result.stream().allMatch(t -> t.getCategoryId().equals(1)));
   }
 
-  private TransactionEntity createTransaction(String id, AccountEntity account, double amount) {
-    return new TransactionEntity(
-        account, "Test transaction", amount,
-        LocalDateTime.now(), "POSTED", "CREDIT", 1, null, id);
-  }
 }
