@@ -54,7 +54,7 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   @Transactional
   public void synchronizeTransactions(AccountEntity account, LocalDate startDate, String[] transactionIds) {
     LOG.infof("Account: %s", account.getId());
-    CashFlowEntity cashFlow = upsertCashFlowUseCase.upsertCashFlow(account.getClientConceptId().intValue());
+    CashFlowEntity cashFlow = upsertCashFlowUseCase.upsertCashFlow(account.getClientConceptId());
     List<AccountItemEntity> accountItems = listAccountItemUseCase.listAccountItems(account.getId());
     LOG.infof("Account Items count: %d", accountItems.size());
 

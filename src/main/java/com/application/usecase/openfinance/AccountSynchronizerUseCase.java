@@ -35,7 +35,7 @@ public class AccountSynchronizerUseCase implements IAccountSynchronizerUseCase {
   private IOpenFinance openFinance;
 
   @Override
-  public AccountEntity synchronizeAccount(Integer conceptId, Long cashFlowId, String connectionId) {
+  public AccountEntity synchronizeAccount(Long conceptId, Long cashFlowId, String connectionId) {
     CashFlowEntity cashFlow = upsertCashFlowUseCase.upsertCashFlow(conceptId);
 
     LOG.infof("ConnectionId: %s", connectionId);

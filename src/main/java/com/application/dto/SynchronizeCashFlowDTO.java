@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 public class SynchronizeCashFlowDTO {
   @NotNull(message = "conceptId is required")
-  private Integer conceptId;
+  private Long conceptId;
 
   @NotNull(message = "cashFlowId is required")
   private Long cashFlowId;
@@ -16,7 +16,7 @@ public class SynchronizeCashFlowDTO {
   public SynchronizeCashFlowDTO() {
   }
 
-  public Integer getConceptId() {
+  public Long getConceptId() {
     return conceptId;
   }
 

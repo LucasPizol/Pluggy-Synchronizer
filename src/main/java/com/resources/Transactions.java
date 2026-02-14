@@ -14,8 +14,8 @@ public class Transactions {
   private ITransactionListUseCase transactionsListUseCase;
 
   @GET
-  public Response listTransactions(@QueryParam("cashFlowId") Long cashFlowId, @QueryParam("page") Integer page,
+  public Response listTransactions(@QueryParam("conceptId") Long conceptId, @QueryParam("page") Integer page,
       @QueryParam("pageSize") Integer pageSize) {
-    return Response.ok(transactionsListUseCase.listTransactions(cashFlowId, page, pageSize)).build();
+    return Response.ok(transactionsListUseCase.listTransactions(conceptId, page, pageSize)).build();
   }
 }

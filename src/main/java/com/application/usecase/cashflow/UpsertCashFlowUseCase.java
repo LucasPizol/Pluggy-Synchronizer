@@ -17,14 +17,14 @@ public class UpsertCashFlowUseCase implements IUpsertCashFlowUseCase {
   private ICashFlowRepository cashFlowRepository;
 
   @Override
-  public CashFlowEntity upsertCashFlow(Integer conceptId) {
+  public CashFlowEntity upsertCashFlow(Long conceptId) {
     CashFlowEntity cashFlow = getCashFlowByConceptUseCase.getCashFlowByConcept(conceptId);
 
     if (cashFlow != null) {
       return cashFlow;
     }
 
-    cashFlow = new CashFlowEntity(conceptId.longValue());
+    cashFlow = new CashFlowEntity(conceptId);
     cashFlowRepository.persist(cashFlow);
     return cashFlow;
   }

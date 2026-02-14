@@ -13,7 +13,7 @@ public class GetCashFlowByConceptUseCase implements IGetCashFlowByConceptUseCase
   private ICashFlowRepository cashFlowRepository;
 
   @Override
-  public CashFlowEntity getCashFlowByConcept(Integer conceptId) {
-    return cashFlowRepository.findByClientConceptId(conceptId.longValue());
+  public CashFlowEntity getCashFlowByConcept(Long conceptId) {
+    return cashFlowRepository.findByClientConceptId(conceptId);
   }
 }
