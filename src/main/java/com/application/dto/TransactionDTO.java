@@ -12,14 +12,11 @@ public class TransactionDTO {
   private String entryMode;
   private Integer installmentNumber;
   private String name;
-  private String originalValueCurrency;
-  private long originalValueSubcents;
-  private String tempValueCurrency;
-  private long tempValueSubcents;
+  private String originalValue;
+  private String tempValue;
   private LocalDate transactionDate;
   private String transactionType;
-  private String valueCurrency;
-  private long valueSubcents;
+  private String value;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
   private Boolean isSynchronized;
@@ -39,14 +36,11 @@ public class TransactionDTO {
     dto.entryMode = entity.getEntryMode();
     dto.installmentNumber = entity.getInstallmentNumber();
     dto.name = entity.getName();
-    dto.originalValueCurrency = entity.getOriginalValueCurrency();
-    dto.originalValueSubcents = entity.getOriginalValueSubcents();
-    dto.tempValueCurrency = entity.getTempValueCurrency();
-    dto.tempValueSubcents = entity.getTempValueSubcents();
+    dto.originalValue = entity.getOriginalValue().toString();
+    dto.tempValue = entity.getTempValue().toString();
     dto.transactionDate = entity.getTransactionDate();
     dto.transactionType = entity.getTransactionType();
-    dto.valueCurrency = entity.getValueCurrency();
-    dto.valueSubcents = entity.getValueSubcents();
+    dto.value = entity.getValue().toString();
     dto.createdAt = entity.getCreatedAt();
     dto.updatedAt = entity.getUpdatedAt();
     dto.isSynchronized = entity.getIntegrationId() != null && !entity.getIntegrationId().isBlank();
@@ -77,20 +71,12 @@ public class TransactionDTO {
     return name;
   }
 
-  public String getOriginalValueCurrency() {
-    return originalValueCurrency;
+  public String getOriginalValue() {
+    return originalValue;
   }
 
-  public long getOriginalValueSubcents() {
-    return originalValueSubcents;
-  }
-
-  public String getTempValueCurrency() {
-    return tempValueCurrency;
-  }
-
-  public long getTempValueSubcents() {
-    return tempValueSubcents;
+  public String getTempValue() {
+    return tempValue;
   }
 
   public LocalDate getTransactionDate() {
@@ -101,12 +87,8 @@ public class TransactionDTO {
     return transactionType;
   }
 
-  public String getValueCurrency() {
-    return valueCurrency;
-  }
-
-  public long getValueSubcents() {
-    return valueSubcents;
+  public String getValue() {
+    return value;
   }
 
   public LocalDateTime getCreatedAt() {

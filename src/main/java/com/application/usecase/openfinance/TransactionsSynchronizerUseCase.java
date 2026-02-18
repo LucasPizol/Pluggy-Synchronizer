@@ -18,13 +18,14 @@ import com.domain.entities.AccountItemEntity;
 import com.domain.entities.TransactionEntity;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
-import com.domain.repositories.categories.ICategoryRepository;
-import com.domain.repositories.subcategories.ISubcategoryRepository;
 import com.domain.repositories.transactions.ITransactionRepository;
+import com.domain.shared.MoneyEmbeddable;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.accountitem.IListAccountItemUseCase;
 import com.domain.usecase.cashflow.IUpsertCashFlowUseCase;
+import com.domain.usecase.categories.ICategoryLookupUseCase;
 import com.domain.usecase.openfinance.ITransactionSynchronizerUseCase;
+import com.domain.usecase.subcategories.ISubcategoryLookupUseCase;
 
 import org.jboss.logging.Logger;
 
@@ -49,10 +50,10 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
   private IUpsertCashFlowUseCase upsertCashFlowUseCase;
 
   @Inject
-  private ICategoryRepository categoryRepository;
+  private ICategoryLookupUseCase categoryLookupUseCase;
 
   @Inject
-  private ISubcategoryRepository subcategoryRepository;
+  private ISubcategoryLookupUseCase subcategoryLookupUseCase;
 
   @Override
   public void synchronizeTransactions(AccountEntity account) {
@@ -97,7 +98,7 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
           TransactionEntity existing = transactionRepository.findAllByIntegrationIds(List.of(transaction.getId()))
               .stream().findFirst().orElseThrow();
           transactionRepository.update(
-              "name = ?1, originalValueSubcents = ?2, tempValueSubcents = ?3, valueSubcents = ?4, transactionDate = ?5, updatedAt = ?6, clientConceptsCashFlowCategoryId = ?7, clientConceptsCashFlowSubcategoryId = ?8 WHERE id = ?9",
+              "name = ?1, originalValue.valueCents = ?2, tempValue.valueCents = ?3, value.valueCents = ?4, transactionDate = ?5, updatedAt = ?6, clientConceptsCashFlowCategoryId = ?7, clientConceptsCashFlowSubcategoryId = ?8 WHERE id = ?9",
               transaction.getDescription() != null ? transaction.getDescription() : "",
               subcents,
               subcents,
@@ -114,9 +115,9 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
         transactionEntity.setCashFlow(cashFlow);
         transactionEntity.setName(transaction.getDescription() != null ? transaction.getDescription() : "");
         transactionEntity.setEntryMode("debit");
-        transactionEntity.setOriginalValueSubcents(subcents);
-        transactionEntity.setTempValueSubcents(subcents);
-        transactionEntity.setValueSubcents(subcents);
+        transactionEntity.setOriginalValue(new MoneyEmbeddable(subcents, "br"));
+        transactionEntity.setTempValue(new MoneyEmbeddable(subcents, "br"));
+        transactionEntity.setValue(new MoneyEmbeddable(subcents, "br"));
         transactionEntity
             .setTransactionDate(transaction.getDate() != null ? transaction.getDate().toLocalDate() : null);
         transactionEntity.setTransactionType(transaction.getType());
@@ -142,8 +143,7 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
     Map<String, Long> subcategoryCategoryIdByName = new HashMap<>();
 
     if (!categoryNames.isEmpty()) {
-      List<CategoryEntity> categories = categoryRepository.findByClientConceptsCashFlowIdAndNames(
-          cashFlowId, categoryNames);
+      List<CategoryEntity> categories = categoryLookupUseCase.findByNames(cashFlowId, categoryNames);
 
       LOG.infof("Categories: %s", categories);
 
@@ -155,7 +155,7 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
       notFoundInCategories.removeAll(categoryIdByName.keySet());
 
       if (!notFoundInCategories.isEmpty()) {
-        List<SubcategoryEntity> subcategories = subcategoryRepository.findByClientConceptsCashFlowIdAndNames(
+        List<SubcategoryEntity> subcategories = subcategoryLookupUseCase.findByNames(
             cashFlowId, notFoundInCategories);
 
         for (SubcategoryEntity sub : subcategories) {

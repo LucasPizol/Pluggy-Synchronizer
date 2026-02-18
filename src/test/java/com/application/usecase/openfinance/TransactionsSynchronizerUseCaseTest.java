@@ -20,12 +20,12 @@ import com.domain.entities.CashFlowEntity;
 import com.domain.entities.TransactionEntity;
 import com.domain.gateway.openfinance.IOpenFinance;
 import com.domain.gateway.openfinance.models.OpenFinanceTransaction;
-import com.domain.repositories.categories.ICategoryRepository;
-import com.domain.repositories.subcategories.ISubcategoryRepository;
 import com.domain.repositories.transactions.ITransactionRepository;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.accountitem.IListAccountItemUseCase;
 import com.domain.usecase.cashflow.IUpsertCashFlowUseCase;
+import com.domain.usecase.categories.ICategoryLookupUseCase;
+import com.domain.usecase.subcategories.ISubcategoryLookupUseCase;
 
 class TransactionsSynchronizerUseCaseTest {
 
@@ -42,10 +42,10 @@ class TransactionsSynchronizerUseCaseTest {
   private IUpsertCashFlowUseCase upsertCashFlowUseCase;
 
   @Mock
-  private ICategoryRepository categoryRepository;
+  private ICategoryLookupUseCase categoryLookupUseCase;
 
   @Mock
-  private ISubcategoryRepository subcategoryRepository;
+  private ISubcategoryLookupUseCase subcategoryLookupUseCase;
 
   @InjectMocks
   private TransactionsSynchronizerUseCase useCase;
@@ -67,8 +67,8 @@ class TransactionsSynchronizerUseCaseTest {
     cashFlow.setId(1L);
 
     when(upsertCashFlowUseCase.upsertCashFlow(any())).thenReturn(cashFlow);
-    when(categoryRepository.findByClientConceptsCashFlowIdAndPluggyIds(any(), any())).thenReturn(Collections.emptyList());
-    when(subcategoryRepository.findByClientConceptsCashFlowIdAndPluggyIds(any(), any())).thenReturn(Collections.emptyList());
+    when(categoryLookupUseCase.findByNames(any(), any())).thenReturn(Collections.emptyList());
+    when(subcategoryLookupUseCase.findByNames(any(), any())).thenReturn(Collections.emptyList());
   }
 
   @Test

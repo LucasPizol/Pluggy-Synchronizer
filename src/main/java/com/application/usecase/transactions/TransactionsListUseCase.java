@@ -13,11 +13,11 @@ import com.domain.entities.CashFlowEntity;
 import com.domain.entities.CategoryEntity;
 import com.domain.entities.SubcategoryEntity;
 import com.domain.entities.TransactionEntity;
-import com.domain.repositories.categories.ICategoryRepository;
-import com.domain.repositories.subcategories.ISubcategoryRepository;
 import com.domain.repositories.transactions.ITransactionRepository;
 import com.domain.shared.PaginatedResponse;
 import com.domain.usecase.cashflow.IGetCashFlowByConceptUseCase;
+import com.domain.usecase.categories.ICategoryLookupUseCase;
+import com.domain.usecase.subcategories.ISubcategoryLookupUseCase;
 import com.domain.usecase.transactions.ITransactionListUseCase;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -32,10 +32,10 @@ public class TransactionsListUseCase implements ITransactionListUseCase {
   private IGetCashFlowByConceptUseCase getCashFlowByConceptUseCase;
 
   @Inject
-  private ICategoryRepository categoryRepository;
+  private ICategoryLookupUseCase categoryLookupUseCase;
 
   @Inject
-  private ISubcategoryRepository subcategoryRepository;
+  private ISubcategoryLookupUseCase subcategoryLookupUseCase;
 
   @Override
   public PaginatedResponse<TransactionDTO> listTransactions(Long conceptId) {
@@ -88,7 +88,7 @@ public class TransactionsListUseCase implements ITransactionListUseCase {
       return new HashMap<>();
     }
 
-    List<CategoryEntity> categories = categoryRepository.findByIds(categoryIds);
+    List<CategoryEntity> categories = categoryLookupUseCase.findByIds(categoryIds);
     return categories.stream()
         .collect(Collectors.toMap(
             CategoryEntity::getId,
@@ -105,7 +105,7 @@ public class TransactionsListUseCase implements ITransactionListUseCase {
       return new HashMap<>();
     }
 
-    List<SubcategoryEntity> subcategories = subcategoryRepository.findByIds(subcategoryIds);
+    List<SubcategoryEntity> subcategories = subcategoryLookupUseCase.findByIds(subcategoryIds);
     return subcategories.stream()
         .collect(Collectors.toMap(
             SubcategoryEntity::getId,

@@ -3,10 +3,14 @@ package com.domain.entities;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.domain.shared.MoneyEmbeddable;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
 import jakarta.persistence.ConstraintMode;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,17 +48,19 @@ public class TransactionEntity {
   @Column(nullable = false)
   private String name;
 
-  @Column(name = "original_value_currency", nullable = false)
-  private String originalValueCurrency = "br";
+  @Embedded
+  @AttributeOverrides({
+      @AttributeOverride(name = "valueCents", column = @Column(name = "original_value_subcents")),
+      @AttributeOverride(name = "currency", column = @Column(name = "original_value_currency"))
+  })
+  private MoneyEmbeddable originalValue = new MoneyEmbeddable(0L, "br");
 
-  @Column(name = "original_value_subcents", nullable = false)
-  private long originalValueSubcents = 0L;
-
-  @Column(name = "temp_value_currency", nullable = false)
-  private String tempValueCurrency = "br";
-
-  @Column(name = "temp_value_subcents", nullable = false)
-  private long tempValueSubcents = 0L;
+  @Embedded
+  @AttributeOverrides({
+      @AttributeOverride(name = "valueCents", column = @Column(name = "temp_value_subcents")),
+      @AttributeOverride(name = "currency", column = @Column(name = "temp_value_currency"))
+  })
+  private MoneyEmbeddable tempValue = new MoneyEmbeddable(0L, "br");
 
   @Column(name = "transaction_date")
   private LocalDate transactionDate;
@@ -62,11 +68,8 @@ public class TransactionEntity {
   @Column(name = "transaction_type")
   private String transactionType;
 
-  @Column(name = "value_currency", nullable = false)
-  private String valueCurrency = "br";
-
-  @Column(name = "value_subcents", nullable = false)
-  private long valueSubcents = 0L;
+  @Embedded
+  private MoneyEmbeddable value = new MoneyEmbeddable(0L, "br");
 
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
@@ -126,20 +129,12 @@ public class TransactionEntity {
     return name;
   }
 
-  public String getOriginalValueCurrency() {
-    return originalValueCurrency;
+  public MoneyEmbeddable getOriginalValue() {
+    return originalValue;
   }
 
-  public long getOriginalValueSubcents() {
-    return originalValueSubcents;
-  }
-
-  public String getTempValueCurrency() {
-    return tempValueCurrency;
-  }
-
-  public long getTempValueSubcents() {
-    return tempValueSubcents;
+  public MoneyEmbeddable getTempValue() {
+    return tempValue;
   }
 
   public LocalDate getTransactionDate() {
@@ -150,12 +145,8 @@ public class TransactionEntity {
     return transactionType;
   }
 
-  public String getValueCurrency() {
-    return valueCurrency;
-  }
-
-  public long getValueSubcents() {
-    return valueSubcents;
+  public MoneyEmbeddable getValue() {
+    return value;
   }
 
   public LocalDateTime getCreatedAt() {
@@ -218,20 +209,12 @@ public class TransactionEntity {
     this.name = name;
   }
 
-  public void setOriginalValueCurrency(String originalValueCurrency) {
-    this.originalValueCurrency = originalValueCurrency;
+  public void setOriginalValue(MoneyEmbeddable originalValue) {
+    this.originalValue = originalValue;
   }
 
-  public void setOriginalValueSubcents(long originalValueSubcents) {
-    this.originalValueSubcents = originalValueSubcents;
-  }
-
-  public void setTempValueCurrency(String tempValueCurrency) {
-    this.tempValueCurrency = tempValueCurrency;
-  }
-
-  public void setTempValueSubcents(long tempValueSubcents) {
-    this.tempValueSubcents = tempValueSubcents;
+  public void setTempValue(MoneyEmbeddable tempValue) {
+    this.tempValue = tempValue;
   }
 
   public void setTransactionDate(LocalDate transactionDate) {
@@ -242,12 +225,8 @@ public class TransactionEntity {
     this.transactionType = transactionType;
   }
 
-  public void setValueCurrency(String valueCurrency) {
-    this.valueCurrency = valueCurrency;
-  }
-
-  public void setValueSubcents(long valueSubcents) {
-    this.valueSubcents = valueSubcents;
+  public void setValue(MoneyEmbeddable value) {
+    this.value = value;
   }
 
   public void setCreatedAt(LocalDateTime createdAt) {
