@@ -35,6 +35,7 @@ import jakarta.transaction.Transactional;
 @ApplicationScoped
 public class TransactionsSynchronizerUseCase implements ITransactionSynchronizerUseCase {
   private static final Logger LOG = Logger.getLogger(TransactionsSynchronizerUseCase.class);
+
   @Inject
   private IOpenFinance openFinance;
 
@@ -80,52 +81,17 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
       OpenFinanceTransaction[] transactions = response.getItems();
       Set<String> existingIds = getExistingTransactionIds(transactions);
 
-      // Coletar todos os nomes de categorias das transações
-      Set<String> categoryNames = Arrays.stream(transactions)
-          .map(OpenFinanceTransaction::getCategory)
-          .filter(c -> c != null && !c.isBlank())
-          .collect(Collectors.toSet());
-
-      // Buscar categorias e subcategorias em batch para evitar N+1 (por nome)
-      Map<String, Long> categoryIdByName = new HashMap<>();
-      Map<String, Long> subcategoryIdByName = new HashMap<>();
-
-      if (!categoryNames.isEmpty()) {
-        // Primeiro busca em categorias pelo nome
-        List<CategoryEntity> categories = categoryRepository.findByClientConceptsCashFlowIdAndNames(
-            cashFlowId, categoryNames);
-        for (CategoryEntity cat : categories) {
-          categoryIdByName.put(cat.getName(), cat.getId());
-        }
-
-        // Nomes não encontrados em categorias, buscar em subcategorias
-        Set<String> notFoundInCategories = new HashSet<>(categoryNames);
-        notFoundInCategories.removeAll(categoryIdByName.keySet());
-
-        if (!notFoundInCategories.isEmpty()) {
-          List<SubcategoryEntity> subcategories = subcategoryRepository.findByClientConceptsCashFlowIdAndNames(
-              cashFlowId, notFoundInCategories);
-          for (SubcategoryEntity sub : subcategories) {
-            subcategoryIdByName.put(sub.getName(), sub.getId());
-          }
-        }
-      }
+      CategoryLookup categoryLookup = loadCategoriesAndSubcategories(cashFlowId, transactions);
 
       for (OpenFinanceTransaction transaction : transactions) {
         long subcents = Math.round(transaction.getAmount() * 100);
         LocalDateTime now = LocalDateTime.now();
 
-        // Determinar categoryId e subcategoryId pelo nome
-        Long categoryId = null;
-        Long subcategoryId = null;
-        String categoryName = transaction.getCategory();
-        if (categoryName != null && !categoryName.isBlank()) {
-          if (categoryIdByName.containsKey(categoryName)) {
-            categoryId = categoryIdByName.get(categoryName);
-          } else if (subcategoryIdByName.containsKey(categoryName)) {
-            subcategoryId = subcategoryIdByName.get(categoryName);
-          }
-        }
+        Long categoryId = findCategory(transaction, categoryLookup);
+        Long subcategoryId = findSubcategory(transaction, categoryId, categoryLookup);
+
+        LOG.infof("Category ID: %s", categoryId);
+        LOG.infof("Subcategory ID: %s", subcategoryId);
 
         if (existingIds.contains(transaction.getId())) {
           TransactionEntity existing = transactionRepository.findAllByIntegrationIds(List.of(transaction.getId()))
@@ -165,6 +131,85 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
     }
   }
 
+  private CategoryLookup loadCategoriesAndSubcategories(Long cashFlowId, OpenFinanceTransaction[] transactions) {
+    Set<String> categoryNames = Arrays.stream(transactions)
+        .map(OpenFinanceTransaction::getCategory)
+        .filter(c -> c != null && !c.isBlank())
+        .collect(Collectors.toSet());
+
+    Map<String, Long> categoryIdByName = new HashMap<>();
+    Map<String, Long> subcategoryIdByName = new HashMap<>();
+    Map<String, Long> subcategoryCategoryIdByName = new HashMap<>();
+
+    if (!categoryNames.isEmpty()) {
+      List<CategoryEntity> categories = categoryRepository.findByClientConceptsCashFlowIdAndNames(
+          cashFlowId, categoryNames);
+
+      LOG.infof("Categories: %s", categories);
+
+      for (CategoryEntity cat : categories) {
+        categoryIdByName.put(cat.getOriginalName().toLowerCase(), cat.getId());
+      }
+
+      Set<String> notFoundInCategories = new HashSet<>(categoryNames);
+      notFoundInCategories.removeAll(categoryIdByName.keySet());
+
+      if (!notFoundInCategories.isEmpty()) {
+        List<SubcategoryEntity> subcategories = subcategoryRepository.findByClientConceptsCashFlowIdAndNames(
+            cashFlowId, notFoundInCategories);
+
+        for (SubcategoryEntity sub : subcategories) {
+          String nameLower = sub.getOriginalName().toLowerCase();
+          subcategoryIdByName.put(nameLower, sub.getId());
+          subcategoryCategoryIdByName.put(nameLower, sub.getCategory().getId());
+        }
+      }
+    }
+
+    return new CategoryLookup(categoryIdByName, subcategoryIdByName, subcategoryCategoryIdByName);
+  }
+
+  private Long findCategory(OpenFinanceTransaction transaction, CategoryLookup lookup) {
+    String catName = transaction.getCategory();
+
+    if (catName == null || catName.isBlank()) {
+      return null;
+    }
+
+    LOG.infof("Category name: %s", catName);
+
+    String categoryNameLower = catName.toLowerCase();
+
+    if (lookup.categoryIdByName().containsKey(categoryNameLower)) {
+      return lookup.categoryIdByName().get(categoryNameLower);
+    }
+
+    if (lookup.subcategoryCategoryIdByName().containsKey(categoryNameLower)) {
+      return lookup.subcategoryCategoryIdByName().get(categoryNameLower);
+    }
+
+    return null;
+  }
+
+  private Long findSubcategory(OpenFinanceTransaction transaction, Long categoryId, CategoryLookup lookup) {
+    if (categoryId == null) {
+      return null;
+    }
+
+    String catName = transaction.getCategory();
+    if (catName == null || catName.isBlank()) {
+      return null;
+    }
+
+    String categoryNameLower = catName.toLowerCase();
+
+    if (lookup.subcategoryIdByName().containsKey(categoryNameLower)) {
+      return lookup.subcategoryIdByName().get(categoryNameLower);
+    }
+
+    return null;
+  }
+
   private Set<String> getExistingTransactionIds(OpenFinanceTransaction[] transactions) {
     List<String> transactionIdsToCheck = Arrays.stream(transactions)
         .map(OpenFinanceTransaction::getId)
@@ -175,5 +220,11 @@ public class TransactionsSynchronizerUseCase implements ITransactionSynchronizer
         .stream()
         .map(TransactionEntity::getIntegrationId)
         .collect(Collectors.toSet());
+  }
+
+  private record CategoryLookup(
+      Map<String, Long> categoryIdByName,
+      Map<String, Long> subcategoryIdByName,
+      Map<String, Long> subcategoryCategoryIdByName) {
   }
 }

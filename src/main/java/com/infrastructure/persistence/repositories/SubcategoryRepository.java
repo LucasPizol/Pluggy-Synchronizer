@@ -66,6 +66,17 @@ public class SubcategoryRepository implements ISubcategoryRepository, PanacheRep
   }
 
   @Override
+  public List<SubcategoryEntity> findByIds(Collection<Long> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return entityManager
+        .createQuery("SELECT s FROM SubcategoryEntity s WHERE s.id IN :ids", SubcategoryEntity.class)
+        .setParameter("ids", ids)
+        .getResultList();
+  }
+
+  @Override
   public List<SubcategoryEntity> findByClientConceptsCashFlowId(Long clientConceptsCashFlowId) {
     return entityManager
         .createQuery("SELECT s FROM SubcategoryEntity s WHERE s.clientConceptsCashFlowId = :cashFlowId ORDER BY s.name",
@@ -97,7 +108,7 @@ public class SubcategoryRepository implements ISubcategoryRepository, PanacheRep
     }
     return entityManager
         .createQuery(
-            "SELECT s FROM SubcategoryEntity s WHERE s.clientConceptsCashFlowId = :cashFlowId AND s.name IN :names",
+            "SELECT s FROM SubcategoryEntity s WHERE s.clientConceptsCashFlowId = :cashFlowId AND s.originalName IN :names",
             SubcategoryEntity.class)
         .setParameter("cashFlowId", clientConceptsCashFlowId)
         .setParameter("names", names)

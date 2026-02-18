@@ -19,6 +19,8 @@ public interface ICategoryRepository {
   List<CategoryEntity> findByClientConceptsCashFlowIdAndNames(Long clientConceptsCashFlowId,
       Collection<String> names);
 
+  List<CategoryEntity> findByIds(Collection<Long> ids);
+
   List<CategoryEntity> findByClientConceptsCashFlowId(Long clientConceptsCashFlowId);
 
   List<CategoryEntity> findByClientConceptsCashFlowId(Long clientConceptsCashFlowId, Integer page,

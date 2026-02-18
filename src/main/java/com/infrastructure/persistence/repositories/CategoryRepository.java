@@ -75,10 +75,21 @@ public class CategoryRepository implements ICategoryRepository, PanacheRepositor
     }
     return entityManager
         .createQuery(
-            "SELECT c FROM CategoryEntity c WHERE c.clientConceptsCashFlowId = :cashFlowId AND c.name IN :names",
+            "SELECT c FROM CategoryEntity c WHERE c.clientConceptsCashFlowId = :cashFlowId AND c.originalName IN :names",
             CategoryEntity.class)
         .setParameter("cashFlowId", clientConceptsCashFlowId)
         .setParameter("names", names)
+        .getResultList();
+  }
+
+  @Override
+  public List<CategoryEntity> findByIds(Collection<Long> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return entityManager
+        .createQuery("SELECT c FROM CategoryEntity c WHERE c.id IN :ids", CategoryEntity.class)
+        .setParameter("ids", ids)
         .getResultList();
   }
 

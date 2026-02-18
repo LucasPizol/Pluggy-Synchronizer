@@ -29,8 +29,10 @@ public class CategoryEntity {
   @Column(name = "is_default", nullable = false)
   private boolean default_ = false;
 
+  @Column(name = "icon")
   private String icon;
 
+  @Column(nullable = false)
   private String name;
 
   @Column(nullable = false)
@@ -48,6 +50,9 @@ public class CategoryEntity {
   @Column(name = "pluggy_id")
   private String pluggyId;
 
+  @Column(name = "original_name")
+  private String originalName;
+
   @OneToMany(mappedBy = "category")
   @JsonIgnore
   private List<SubcategoryEntity> subcategories;
@@ -55,8 +60,9 @@ public class CategoryEntity {
   public CategoryEntity() {
   }
 
-  public CategoryEntity(String name, Long clientConceptsCashFlowId, String pluggyId) {
+  public CategoryEntity(String name, String originalName, Long clientConceptsCashFlowId, String pluggyId) {
     this.name = name;
+    this.originalName = originalName;
     this.clientConceptsCashFlowId = clientConceptsCashFlowId;
     this.pluggyId = pluggyId;
     LocalDateTime now = LocalDateTime.now();
@@ -86,6 +92,10 @@ public class CategoryEntity {
 
   public String getName() {
     return name;
+  }
+
+  public String getOriginalName() {
+    return originalName;
   }
 
   public String getStatus() {
@@ -134,6 +144,10 @@ public class CategoryEntity {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setOriginalName(String originalName) {
+    this.originalName = originalName;
   }
 
   public void setStatus(String status) {

@@ -22,11 +22,9 @@ public class TransactionDTO {
   private long valueSubcents;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
-  private Long cashFlowId;
-  private Long clientConceptsCashFlowCategoryId;
-  private Long clientConceptsCashFlowPurchaseId;
-  private Long clientConceptsCashFlowSubcategoryId;
-  private String integrationId;
+  private Boolean isSynchronized;
+  private TransactionCategoryDTO category;
+  private TransactionCategoryDTO subcategory;
 
   public TransactionDTO() {
   }
@@ -51,11 +49,7 @@ public class TransactionDTO {
     dto.valueSubcents = entity.getValueSubcents();
     dto.createdAt = entity.getCreatedAt();
     dto.updatedAt = entity.getUpdatedAt();
-    dto.cashFlowId = entity.getCashFlow() != null ? entity.getCashFlow().getId() : null;
-    dto.clientConceptsCashFlowCategoryId = entity.getClientConceptsCashFlowCategoryId();
-    dto.clientConceptsCashFlowPurchaseId = entity.getClientConceptsCashFlowPurchaseId();
-    dto.clientConceptsCashFlowSubcategoryId = entity.getClientConceptsCashFlowSubcategoryId();
-    dto.integrationId = entity.getIntegrationId();
+    dto.isSynchronized = entity.getIntegrationId() != null && !entity.getIntegrationId().isBlank();
     return dto;
   }
 
@@ -123,23 +117,23 @@ public class TransactionDTO {
     return updatedAt;
   }
 
-  public Long getCashFlowId() {
-    return cashFlowId;
+  public Boolean isSynchronized() {
+    return isSynchronized;
   }
 
-  public Long getClientConceptsCashFlowCategoryId() {
-    return clientConceptsCashFlowCategoryId;
+  public TransactionCategoryDTO getCategory() {
+    return category;
   }
 
-  public Long getClientConceptsCashFlowPurchaseId() {
-    return clientConceptsCashFlowPurchaseId;
+  public TransactionCategoryDTO getSubcategory() {
+    return subcategory;
   }
 
-  public Long getClientConceptsCashFlowSubcategoryId() {
-    return clientConceptsCashFlowSubcategoryId;
+  public void setCategory(TransactionCategoryDTO category) {
+    this.category = category;
   }
 
-  public String getIntegrationId() {
-    return integrationId;
+  public void setSubcategory(TransactionCategoryDTO subcategory) {
+    this.subcategory = subcategory;
   }
 }

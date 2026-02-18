@@ -17,6 +17,8 @@ public interface ISubcategoryRepository {
 
   List<SubcategoryEntity> findByCategoryIds(Collection<Long> categoryIds);
 
+  List<SubcategoryEntity> findByIds(Collection<Long> ids);
+
   List<SubcategoryEntity> findByClientConceptsCashFlowId(Long clientConceptsCashFlowId);
 
   List<SubcategoryEntity> findByClientConceptsCashFlowIdAndPluggyIds(Long clientConceptsCashFlowId,

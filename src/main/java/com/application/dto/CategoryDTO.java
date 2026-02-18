@@ -9,6 +9,7 @@ import com.domain.entities.CategoryEntity;
 public class CategoryDTO {
   private Long id;
   private String name;
+  private String originalName;
   private String pluggyId;
   private List<SubcategoryDTO> subcategories = new ArrayList<>();
 
@@ -21,6 +22,7 @@ public class CategoryDTO {
     CategoryDTO dto = new CategoryDTO();
     dto.id = entity.getId();
     dto.name = entity.getName();
+    dto.originalName = entity.getOriginalName();
     dto.pluggyId = entity.getPluggyId();
     if (entity.getSubcategories() != null) {
       dto.subcategories = entity.getSubcategories().stream()
@@ -42,6 +44,10 @@ public class CategoryDTO {
     return pluggyId;
   }
 
+  public String getOriginalName() {
+    return originalName;
+  }
+
   public List<SubcategoryDTO> getSubcategories() {
     return subcategories;
   }
@@ -52,6 +58,10 @@ public class CategoryDTO {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public void setOriginalName(String originalName) {
+    this.originalName = originalName;
   }
 
   public void setPluggyId(String pluggyId) {

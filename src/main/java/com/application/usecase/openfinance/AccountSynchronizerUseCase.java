@@ -57,13 +57,11 @@ public class AccountSynchronizerUseCase implements IAccountSynchronizerUseCase {
 
     accountItemSynchronizerUseCase.synchronizeAccountItems(account);
 
-    LOG.infof("Synchronizing transactions");
-
-    transactionSynchronizerUseCase.synchronizeTransactions(account);
-
     LOG.infof("Synchronizing categories");
-
     categorySynchronizerUseCase.synchronizeCategories(account);
+
+    LOG.infof("Synchronizing transactions");
+    transactionSynchronizerUseCase.synchronizeTransactions(account);
 
     return account;
   }

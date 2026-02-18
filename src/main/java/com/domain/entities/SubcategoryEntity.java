@@ -22,7 +22,11 @@ public class SubcategoryEntity {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
+  @Column(nullable = false)
   private String name;
+
+  @Column(name = "original_name")
+  private String originalName;
 
   @Column(name = "pluggy_id")
   private String pluggyId;
@@ -44,8 +48,10 @@ public class SubcategoryEntity {
   public SubcategoryEntity() {
   }
 
-  public SubcategoryEntity(String name, String pluggyId, CategoryEntity category, Long clientConceptsCashFlowId) {
+  public SubcategoryEntity(String name, String originalName, String pluggyId, CategoryEntity category,
+      Long clientConceptsCashFlowId) {
     this.name = name;
+    this.originalName = originalName;
     this.pluggyId = pluggyId;
     this.category = category;
     this.clientConceptsCashFlowId = clientConceptsCashFlowId;
@@ -68,6 +74,14 @@ public class SubcategoryEntity {
 
   public CategoryEntity getCategory() {
     return category;
+  }
+
+  public Long getCategoryId() {
+    return category.getId();
+  }
+
+  public String getOriginalName() {
+    return originalName;
   }
 
   public Long getClientConceptsCashFlowId() {
